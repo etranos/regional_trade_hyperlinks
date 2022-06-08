@@ -1,0 +1,220 @@
+---
+title: "Appendix"
+author: "Emmanouil Tranos; Andres Carrascal Incera; George WIllis"
+date: "01/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis')
+devtools::install_github("dmurdoch/leaflet@crosstalk4") # special edit of package for maps install first
+library(leaflet)
+library(readr)
+library(knitr)
+library(rprojroot)
+library(rgdal)
+library(stplanr)
+library(sf)
+library(rgdal)
+library(dplyr)
+library(crosstalk)
+library(DT)
+library(tidyverse)
+
+library(geosphere)
+library(RColorBrewer)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+# Merging Data
+
+```{r load example data}
+example1 <- read_csv(paste0(path,"/data_inter/Examples/example1.csv"))
+example2 <- read_csv(paste0(path,"/data_inter/Examples/example2.csv"))
+example3 <- read_csv(paste0(path,"/data_inter/Examples/example3.csv"))
+example4 <- read_csv(paste0(path,"/data_inter/Examples/example4.csv"))
+```
+This process describes how geographic regions were added to the host-linkage dataset provided by JISC UK Web Domain Dataset^[https://data.webarchive.org.uk/opendata/ukwa.ds.2/geo/].
+The data is from 2000-2010.
+The process begins combining the host-host links to a file containing unique postcodes for each host ending in co.uk.
+An example is below.
+
+```{r Example}
+kable(example1, caption = "Host-linkage file")
+kable(example2, caption = "Unique postcodes and hosts")
+
+```
+
+The data was combined by matching "domains".
+If an origin or destination was found in in the postcode data, it was added to the file.
+Host-links without a postcode were dropped.
+This leaves us with an origin host, domain, postcode, and destination host, domain, postcode and the number of links between.
+This is shown below.
+
+```{r Example 3}
+kable(example3, caption = "Combined host and postcode data")
+```
+
+The next step was to remove website that linked to themselves (the first row above).
+This data does not interest us as we are looking for links between different websites.
+Therefore if origin host and destination host were the same, they were dropped.
+We now have host-host links with an associated unique postcode and the number of links.
+
+The next step was to aggregate to the NUTS2 regions.
+This was done by using a postcode to NUTS2 (2010) lookup file combined with the above created data.
+Almost every postcode had an associated NUTS2 code, so this was added.
+The data was then aggregated summing all data with the same origin NUTS and destination NUTS codes.
+We are then left with our NUTS2 -> NUTS2 links.
+The same process was done for every year 2000-2010.
+
+```{r example 4}
+kable(example4, caption = "Final NUTS2 data")
+```
+
+
+```{r Load data}
+path <- find_rstudio_root_file()
+path.data <- paste0(path, "/data_inter/test_t2.RData") #where total and LAD is located
+load(path.data)
+#total <- read_csv("total.csv", col_types = cols(X1 = col_skip())) # if local
+
+Mapping_df <- total %>% 
+  dplyr::select(orig, dest, id, io,hl, central.orig, central.dest, year)
+
+shp <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "NUTS_RG_01M_2010_4326_LEVL_2")
+
+shp_UK <- subset(shp, NUTS_ID %in% Mapping_df$orig) 
+centroids <- SpatialPointsDataFrame(coordinates(shp), data = as(shp, "data.frame")[c("NUTS_ID")])
+#merge data for origins and destinations
+Mapping_df <- merge(Mapping_df, centroids, by.x="orig", by.y="NUTS_ID") 
+Mapping_df <- merge(Mapping_df, centroids, by.x="dest", by.y="NUTS_ID")
+Names <- shp_UK@data[,c(2,4)]
+Mapping_df <- merge(Mapping_df, Names, by.x="dest", by.y = "NUTS_ID")
+Mapping_df <- merge(Mapping_df, Names, by.x="orig", by.y = "NUTS_ID")
+names(Mapping_df) <- c("orig", "dest", "id_flow", "io", "hl", "central.orig", "central.dest","Year", "lng_orig", "lat_orig","lng_dest", "lat_dest", "Destination", "Origin")
+Mapping_df <- Mapping_df[,c(1,2,3,4,5,6,7,8,11,12,9,10,13,14)]
+
+#filter for flows 50+ to avoid overcrowding
+Mapping_df <- Mapping_df %>%
+  filter(Mapping_df$hl>49)
+```
+
+
+# Hyperlink data
+
+Below is the hyperlink data plotted for all years, for all links 100 or more.
+
+```{r HL flow maps}
+# create specific SP dataframe
+flows <- gcIntermediate(Mapping_df[,9:10], Mapping_df[,11:12], sp = TRUE, addStartEnd = TRUE)
+flows$ID <- Mapping_df$id_flow #id for label
+flows$hl <- Mapping_df$hl #hl
+flows$hl_log <- log(Mapping_df$hl)/9 #for pal
+flows$io <- round(Mapping_df$io,1)
+flows$origins <- Mapping_df$orig
+flows$destinations <- Mapping_df$dest
+flows$Year <- Mapping_df$Year
+flows$Year_format <- as.Date(as.character(Mapping_df$Year), format = "%Y")# no commas
+flows$Origin <- Mapping_df$Origin
+flows$Destinaton <- Mapping_df$Destination
+
+
+# create crosstalk sharedata
+sd_map <- SharedData$new(flows)
+sd_df <- SharedData$new(as.data.frame(flows@data), group = sd_map $groupName())
+
+pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
+
+#filters
+filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~hl, step=50, max = 40000, width = 600)
+filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
+filter_select("Origin", "Origin", sd_df, ~Origin)
+
+
+#map
+bscols(
+  leaflet() %>%
+    addProviderTiles("CartoDB.Positron") %>%
+    addPolylines(data = sd_map, weight = ~hl_log, color = ~pal(hl_log), label = ~ID)
+)
+
+#datatable
+bscols(
+  datatable(sd_df, extensions="Scroller", style="bootstrap", class="compact", width="100%", 
+            options=list(deferRender=TRUE, scrollY=300, scroller=TRUE,columnDefs = list(list(visible=FALSE, targets=c(3,5,6,8)))))
+  #remove unwanted rows from view
+)
+
+```
+
+# Predictions
+
+## LAD level predictions
+
+
+```{r LADs, echo=FALSE, warning=FALSE}
+path.data <- paste0(path, "/data_inter/test_t2.RData")
+load(path.data)
+
+#lad_prediction <- read_csv("lad_prediction.csv", col_types = cols(X1 = col_skip())) # if local
+
+Lad_df <- lad_prediction %>% 
+  dplyr::select(orig, dest, id, model.all2009, hl, year, lad.orig, lad.dest)
+
+#shapefile and centroids
+shp_LA <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC")
+shp_UK_LA <- subset(shp_LA, lad18cd %in% Mapping_df$orig)
+centroids_LA <- as.data.frame(shp_LA)[,c(2,7,8)]
+
+# merge for spatial units
+lad_prediction <- merge(Lad_df, centroids_LA, by.x="orig", by.y="lad18cd")
+lad_prediction<- merge(lad_prediction, centroids_LA, by.x="dest", by.y="lad18cd")
+
+#remove self-links
+#lad_prediction <- lad_prediction %>%
+ #filter(!orig==dest)
+
+# DF for maps
+names(lad_prediction) <- c("dest", "orig", "id_flow", "prediction_2009", "hl", "year", "Origin","Destination", "lng_orig", "lat_orig","lng_dest", "lat_dest")
+
+flows_lad <- gcIntermediate(lad_prediction[,9:10], lad_prediction[,11:12], sp = TRUE, addStartEnd = TRUE)
+flows_lad$ID <- lad_prediction$id_flow
+flows_lad$prediction <- round(lad_prediction$prediction_2009, 2)
+flows_lad$prediction_log <- log(lad_prediction$prediction_2009)
+flows_lad$hl <- lad_prediction$hl
+flows_lad$origins <- lad_prediction$orig
+flows_lad$destinations <- lad_prediction$dest
+flows_lad$Origin <- lad_prediction$Origin
+flows_lad$Destinaton <- lad_prediction$Destination
+
+
+# create crosstalk sharedata
+lad_map <- SharedData$new(flows_lad)
+lad_df <- SharedData$new(as.data.frame(flows_lad@data), group = lad_map $groupName())
+
+pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
+
+#filters
+filter_slider("Prediction", "Prediction", lad_df, column=~prediction, step=50, max = 64000, width = 600)
+
+filter_select("Origin", "Origin", lad_df, ~Origin)
+
+
+#maps
+bscols(
+  leaflet() %>%
+    addProviderTiles("CartoDB.Positron") %>%
+    addPolylines(data = lad_map, weight = ~prediction_log, color = ~pal(prediction_log), label = ~ID)
+)
+
+#datatable
+bscols(
+  datatable(lad_df, extensions="Scroller", style="bootstrap", class="compact", width="100%", options=list(deferRender=TRUE, scrollY=300, scroller=TRUE, columnDefs = list(list(visible=FALSE, targets=c(3,5,6)))))
+)
+
+
+```
+
+

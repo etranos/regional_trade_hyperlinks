@@ -1,0 +1,87 @@
+---
+title: "Appendix"
+author: ""
+output: pdf_document
+---
+
+```{r setup, echo = F, message = F, warning = F}
+library(tidyverse)
+library(rprojroot)
+library(stargazer)
+
+knitr::opts_chunk$set(echo = F, message = F, warning = F, results='asis')
+```
+
+## Out of sample $R^2$ for differnet sectors
+
+```{r}
+
+# fig.cap="\\label{prediction}Out of sample RMSE for differnet sectors"
+
+path <- find_rstudio_root_file()
+
+path.data <- paste0(path, "/data_inter/test_t2_sectors.RData")
+load(path.data)
+
+new.order <- (14:1)
+
+rf.year.all.metrics %>%
+  #round(2) %>%
+  filter(metric=="Rsquared") %>%
+  select(-metric) %>% 
+  relocate(sector) %>%
+  `colnames<-`(gsub("X", "", names(.))) %>% 
+  slice(new.order) %>% 
+  mutate(sector = sub('s', '', sector)) %>% 
+  stargazer(summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+          notes = c("s1: Agriculture, s2: Mining, s3: Food, s4: Textiles, s5: Chemicals, s6: Equipment,", 
+          "s8: Manufacturing; s9: Construction, s10: Distribution, s11: Hospitality, " , 
+          "s12:	Transport, s13: Financial, s14: Real Estate, s15: Non-Market Services"),
+          title = "R-squared for t + 2 out of sample predictions per sector\\label{sector_R2}"
+            )
+```
+
+## Lasso regressions
+
+```{r}
+rm(list=ls())
+path <- find_rstudio_root_file()
+path.data <- paste(path, "/data_inter/test_t2_lasso.RData", sep = "")
+load(path.data)
+
+all.metrics <- rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  rownames_to_column("metric") %>%
+  pivot_longer(-metric, names_to = "year", values_to="value") %>%
+  pivot_wider(names_from = "metric", values_from = "value") %>%
+  mutate(year = gsub("X", "", year))
+
+# all.metrics %>% kable(format = "latex",
+#       digits = 3,
+#       position = "left")
+
+stargazer(all.metrics,
+          summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+#          notes = "",
+          title = "LASSO regressions: accuracy metrics in unseen data from t + 2\\label{accuracy_test}")
+
+```
+
