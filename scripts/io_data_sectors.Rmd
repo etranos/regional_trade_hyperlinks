@@ -1,0 +1,637 @@
+---
+title: "I/O and hyperlinks, data and descriptives"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "./outputs")
+})
+---
+  
+```{r settings, echo=FALSE, results= 'hide', message=FALSE}
+library(knitr)
+library(randomForest)
+library(data.table)
+library(stplanr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readxl)
+library(httr)
+library(tidyverse)
+library(rgdal)
+library(geosphere)
+library(raster)
+library(corrplot)
+library(gridExtra)
+library(ggrepel)
+library(igraph)
+library(leaflet)
+library(caret)
+library(DataExplorer)
+library(skimr)
+library(rprojroot)
+
+options(scipen=999)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load I/O data
+
+These are the industry codes.
+To begin with, we start with the total of all sectors.
+We can talk at a later stage about different sectors.
+
+Code   Industry name
+----- ------------------------------------------------------------
+ss1	   Agriculture
+ss2	   Mining_quarrying_and_energy_supply
+ss3	   Food_beverages_and_tobacco
+ss4	   Textiles_and_leather_etc
+ss5	   Coke_refined_petroleum_nuclear_fuel_and_chemicals_etc
+ss6	   Electrical_and_optical_equipment_and_Transport_equipment
+ss8	   Other_manufacturing
+ss9	   Construction
+ss10	 Distribution
+ss11	 Hotels_and_restaurant
+ss12	 Transport_storage_and_communication
+ss13   Financial_intermediation
+ss14	 Real_estate_renting_and_busine_activitie
+ss15	 Non-Market_Service
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+files.url <- paste0(path, "/data/IO/")
+files <- list.files(path=files.url)
+
+n <- 1999
+
+total.y <- data.frame(matrix(NA, ncol=1, nrow=1369))[-1]
+
+sectors <- c("ss1", "ss2", "ss3",
+             "ss4", "ss5", "ss6",
+             "ss8", "ss9", "ss10",
+             "ss11", "ss12", "ss13", 
+             "ss14", "ss15")
+
+for(i in files){
+  for(j in sectors){
+  file <- paste(path, "/data/IO/", i, sep = "")
+  #file <- paste("C:/Users/nw19521/DataShare/Regional positioning in GVC and networks (Andre Carrascal Incera)/data/IO/", i, sep = "")
+  #file <- "C:/Users/nw19521/DataShare/Regional positioning in GVC and networks (Andre Carrascal Incera)/data/IO/2000.xlsx" 
+  y.names <- read_excel(file, col_names = F)
+  
+  # keep ss2 rows
+  y.names <- y.names[y.names$...2 == j | is.na((y.names$...2)),]  
+  
+  # keep ss2 columns
+  y.names <- as.matrix(y.names)
+  y.names <- y.names[, y.names[2, ] == j] 
+  
+  # create a vector with NUTS2 names
+  y.names.c <- y.names[(1),-(1:2)]
+  #y.names.c <- t(y.names.c)
+  y.names.c <- as.data.frame(y.names.c)
+  
+  # column names
+  y.names <- y.names[-2,-(1:2)]
+  colnames(y.names) <- y.names[1,]
+  y.names <- y.names[-1,]
+  y.names <- as.data.frame(y.names)
+  
+  # convert flows to numeric
+  y.names <- sapply(y.names, function(x) as.numeric(as.character(x)))
+  
+  # from OD to edge list
+  y.names <- as.matrix(y.names)
+  
+  # row.names
+  row.names(y.names) <- y.names.c$y.names.c
+  
+  m <- odmatrix_to_od(y.names)
+  m$flow <- as.numeric(as.character(m$flow))
+  
+  # orig_dest id
+  m$id <- paste0(m$orig, "_", m$dest)
+  
+  # rename flow variable with year id
+  n <- n +1
+  #names(m)[names(m) == "flow"] <- paste("y", n, j, sep="") 
+  names(m)[names(m) == "flow"] <- paste(i, j, sep="") 
+  #assign(paste("y", n, sep=""), m$flow )
+  total.y <- cbind(total.y,m)
+}
+}
+
+# remove duplicated columns
+total.y <- total.y[!duplicated(as.list(total.y))]
+total.y <- total.y %>%
+  relocate(id, .before=orig)
+
+# removes .xlsx form column names
+names(total.y) <- sub(".xlsx", "", names(total.y))
+
+# change UKD2 for UKD6, UKD5 to UKD7, UKM2 to UMK5,UKM3 to UKM7
+# previous WRONG change UKD2 for UKD6 and UKD3 to UKD7
+# https://en.wikipedia.org/wiki/NUTS_statistical_regions_of_the_United_Kingdom#NUTS_2016
+df <- data.frame(lapply(total.y[,(1:3)], function(x) gsub("UKD2", "UKD6", x)))
+df <- data.frame(lapply(df, function(x) gsub("UKD5", "UKD7", x)))
+# df <- data.frame(lapply(df, function(x) gsub("UKM2", "UKM5", x))) # Andre suggested this, but to match with hyperlinks, 
+# df <- data.frame(lapply(df, function(x) gsub("UKM3", "UKM7", x))) # which is based on 2010 version, UKM should not change.
+total.y <- cbind(df, total.y[,-(1:3)])
+
+```
+
+## Hyperlink data
+
+These region-to-region flows represent the number of hyperlinks between two regions. 
+These are hyperlinks between commercial websites that is websites under the .co.uk Second Level Domain (SLD).
+Also, we only consider commercial website that contain one unique UK postcode in the text.
+
+```{r echo=FALSE, results= 'hide', message=FALSE, warning=FALSE}
+
+files.path <- paste0(path, "/data/NUTS210_hyperlinks/weighted")
+files <- list.files(path=files.path,
+                    pattern = "^NUTS210")
+n <- 1999
+
+for(i in files){
+  
+  file <- paste(path, "/data/NUTS210_hyperlinks/weighted/", i, sep = "")
+  
+  x <- fread(file)
+  x$id <- paste0(x$origin, "_", x$destination)
+  x$V1 <- NULL
+  x$destination <- NULL
+  x$origin <- NULL
+  
+  # rename flow variable with year id
+  n <- n +1
+  names(x)[names(x) == "weight"] <- paste("x", n, sep="") 
+  #assign(paste("y", n, sep=""), m$flow )
+  total.y <- merge(total.y, x, by = "id", all.x = T)
+}
+
+# drop duplicates
+#df = total.y[!duplicated(total.y$id),]
+
+# 0s in hyperlink
+sapply(total.y, function(x) sum(is.na(x)))
+# select or rows for which the x variables are na
+no_hyper <- total.y %>% filter_at(vars(contains("x")), is.na)
+# replace NAs with 0s
+total.y[, -(1:3)][is.na(total.y[, -(1:3)])] <- 0
+```
+
+### melt and merge sectors with hl
+
+```{r}
+# # single sector test
+# total.ss1.melt <- reshape2::melt(total.y, measure.vars = grep("ss1", names(total.y), value = T))
+# total.ss1.melt <- total.ss1.melt %>%
+#   dplyr::select(id, variable, value) %>%
+#   filter(grepl("ss1$", variable)) %>%
+#   mutate(variable = gsub("ss1", "", variable)) %>%
+#   rename(year = variable,
+#          ss1 = value)
+
+# loop on sectors
+for (s in sectors){
+  total.sector.melt <- reshape2::melt(total.y, measure.vars = grep(s, names(total.y), value = T))
+  sector <- paste0(s, "$") # for the grepl()
+  total.sector.melt <- total.sector.melt %>%
+    dplyr::select(id, variable, value) %>%
+    dplyr::filter(grepl(sector, variable)) %>%
+    mutate(variable = gsub(s, "", variable)) %>%
+    rename(year = variable) #, sector.name = value)
+  colnames(total.sector.melt)[3] <- paste0(s)
+  assign(paste0(s, "melt.sector"), total.sector.melt)
+}
+
+
+sectors <- grep("melt.sector",names(.GlobalEnv),value=TRUE)
+sectors <- do.call("list",mget(sectors))
+
+sapply(sectors, function(x) dim(x))
+sapply(sectors, function(x) names(x))
+
+# merge with reduce
+sectors <- sectors %>% 
+  reduce(inner_join, by = c("id", "year"))
+sapply(data, function(x) sum(is.na(x)))
+
+total.hl.melt <- reshape2::melt(total.y, measure.vars = grep("x", names(total.y), value = T))
+total.hl.melt <- total.hl.melt %>%
+  dplyr::select(id, orig, dest, variable, value) %>%
+  #filter(grepl("x$", variable)) %>%
+  mutate(variable = gsub("x", "", variable)) %>%
+  rename(year = variable,
+         hl = value)
+
+total <- merge(total.hl.melt, sectors, by = c("id", "year"))
+
+```
+
+## Distance
+
+I calculate the distance between NUTS2 centroids.
+**TODO**: check if it is spherical distance 
+
+```{r echo=FALSE, results= 'hide', message=FALSE, warning=FALSE}
+nuts.path <- paste0(path, "/data/spatial")
+nuts.shp <- readOGR(nuts.path, "NUTS_RG_01M_2010_4326_LEVL_2")
+
+# keep UK regions
+nuts.shp <- nuts.shp[nuts.shp$CNTR_CODE=="UK",]
+
+# projection
+proj4string(nuts.shp) <- CRS("+init=epsg:4326") #define projection
+
+# centroids
+nuts.cent <- geosphere::centroid(nuts.shp)
+
+# distance
+nuts.dist <- distm(nuts.cent)
+rownames(nuts.dist) <- nuts.shp@data$NUTS_ID
+colnames(nuts.dist) <- nuts.shp@data$NUTS_ID
+
+nuts.dist <- reshape2::melt(nuts.dist)
+nuts.dist$id <- paste0(nuts.dist$Var1, "_", nuts.dist$Var2)
+nuts.dist$Var1 <- NULL
+nuts.dist$Var2 <- NULL
+names(nuts.dist)[1] <- "dist"
+
+# radius to replace internal distances
+r <- nuts.shp@data %>%
+  mutate(dist.radius = (sqrt(area(nuts.shp)/pi))) %>% # /1000, it should be in m.
+  mutate(id = paste(NUTS_ID, NUTS_ID, sep = "_")) %>%
+  dplyr::select(id, dist.radius) 
+
+nuts.dist <- merge(nuts.dist, r, by = "id", all.x = T)
+nuts.dist$dist.radius <- ifelse(nuts.dist$dist==0, nuts.dist$dist.radius, nuts.dist$dist)
+nuts.dist$diam <- NULL
+
+total <- merge(total, nuts.dist, by = "id", all.x = T)
+
+# sapply(total, function(x) sum(is.na(x)))
+# missing.nuts <- total[is.na(total$dist),]
+```
+
+## GVA
+
+Adding yearly GVA data to capture market size.
+Not used anymore because it was used for the IO construction
+
+```{r eval=FALSE, echo=FALSE, results= 'hide', message=FALSE, warning=FALSE}
+#file <- "C:\\Users\\nw19521\\DataShare\\Regional positioning in GVC and networks (Andre Carrascal Incera)\\data\\other\\Data GVA EUREGIO UK.xlsx"
+file <- "./data/other/Data GVA EUREGIO UK.xlsx"
+gva <- read_excel(file, col_names = T)
+
+# Sum for all sectors
+gva$Code_sector <- NULL
+gva <- gva %>% 
+  group_by(Code_region) %>% 
+  summarise_all(funs(sum))
+
+gva <- gva %>%
+  melt(id.vars=c("Code_region")) 
+
+gva$variable <- gva$variable %>%
+  as.character() %>%
+  str_remove("GVA_") %>%
+  as.numeric()
+
+gva <- rename(gva, year=variable)
+gva <- rename(gva, gva=value)
+
+gva$Code_region <- gsub("UKD2", "UKD6", gva$Code_region)
+gva$Code_region <- gsub("UKD5", "UKD7", gva$Code_region)
+
+# merge
+total <- merge(total, gva, by.x = c("orig", "year"), by.y = c("Code_region", "year"), all.x = T) 
+total <- rename(total, gva.orig=gva)
+total <- merge(total, gva, by.x = c("dest", "year"), by.y = c("Code_region", "year"), all.x = T) 
+total <- rename(total, gva.dest=gva)
+
+# rearrange columns
+total <- dplyr::select(total, id, dest, orig, year, io, hl, dist, gva.orig, gva.dest)
+```
+
+## Population
+
+```{r}
+# library(eurostat)
+
+# tf <- tempfile(fileext = ".xlsx")
+# download.file(url = 'https://ec.europa.eu/eurostat/documents/345175/629341/NUTS2013-NUTS2016.xlsx', destfile = tf,  mode = 'wb'  )
+
+# pop <- get_eurostat(id = "demo_r_d2jan", select_time = "Y") %>%
+#   filter(grepl("UK", geo)) %>%
+#   filter(sex=="T") %>%
+#   mutate(nuts.type=str_length(geo)) %>%
+#   filter(nuts.type==4) %>%
+#   mutate(year=as.numeric(str_sub(time, start = 1, end = 4))) %>%
+#   filter(year > 1999 & year <2011) %>%
+#   harmonize_geo_code()
+
+file <- paste0(path,"/data/other/UK pop_EUREGIO.xlsx")
+pop <- read_excel(file, col_names = T)
+
+pop <- pop %>% 
+  mutate(emp_thousands = as.numeric(emp_thousands), 
+         pop_total = as.numeric(pop_total),
+         pop_density = as.numeric(pop_density),
+         code = as.factor(code))
+sapply(pop, function(x) sum(is.na(x)))
+
+# impute with means
+library(imputeTS)
+pop <- na_mean(pop) # replaces with mean of all observations
+
+pop$code <- gsub("UKD2", "UKD6", pop$code)
+pop$code <- gsub("UKD5", "UKD7", pop$code)
+
+
+# merge
+total <- merge(total, pop, by.x = c("orig", "year"), by.y = c("code", "year"), all.x = T) 
+#sapply(total, function(x) sum(is.na(x)))
+total <- total %>%
+  rename(emp_thousands.orig = emp_thousands,
+         pop_total.orig = pop_total,
+         pop_density.orig = pop_density) %>%
+  dplyr::select(-c(number, name))
+
+total <- merge(total, pop, by.x = c("dest", "year"), by.y = c("code", "year"), all.x = T) 
+#sapply(total, function(x) sum(is.na(x)))
+total <- total %>%
+  rename(emp_thousands.dest = emp_thousands,
+         pop_total.dest = pop_total,
+         pop_density.dest = pop_density) %>%
+  dplyr::select(-c(number, name))
+
+```
+
+
+## Node centralities
+
+I calculate simple weighted centrality for the NUTS2 regions based on the hyperlinks. 
+This represents the volume of all incoming and outgoing hyperlinks for each region.
+**TODO**: does it make sense to bring other network variables? 
+  Please note that this is an aggregated network of hyperlink flows between regions and not a network of individual (website-to-website) flows.
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+
+years <- (2000:2010)
+centralities <- data.frame()
+
+for (i in years){
+  net <- subset(total, year==i, select = c(orig, dest, hl))
+  net <- rename(net, weight=hl)
+  net <- graph_from_data_frame(net, directed = TRUE)#, vertices = NULL)
+  #central <- as.data.frame(graph.strength(net, loops = TRUE, mode = "all"))  # weighted degree
+  #central <- eigen_centrality(net, directed = TRUE)                          # eigenvector
+  #central <- as.data.frame(central$vector)                                   # eigenvector
+  #central <- page.rank(net, directed = T)                                    # page.rank
+  #central <- as.data.frame(central$vector)                                   # page.rank
+  #central <- authority_score(net)                                            # authority
+  #central <- as.data.frame(central$vector)                                   # authority
+  central <- hub_score(net)                                                   # hub
+  central <- as.data.frame(central$vector)                                    # hub
+  central$year <- i
+  centralities <- rbind(centralities, central)
+}
+names(centralities)[1]<- "centrality"
+centralities$nuts <- row.names(centralities)
+# keep the first 4 characters for NUTS2 -- more characters were added as row names
+centralities$nuts <- substr(centralities$nuts, start = 1, stop = 4)
+
+total <- merge(total, centralities, by.x = c("year", "orig"), by.y = c("year", "nuts"), all.x = TRUE)
+total <- rename(total, central.orig=centrality)
+total <- merge(total, centralities, by.x = c("year", "dest"), by.y = c("year", "nuts"), all.x = TRUE)
+total <- rename(total, central.dest=centrality)
+
+# rearrange columns
+# total <- dplyr::select(total, id, dest, orig, year, io, hl, dist, gva.orig, gva.dest, central.orig, central.dest)
+```
+
+## Write output file
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+# export data file
+
+total.path <- paste(path, "/data_inter/total_sectors.csv", sep = "")
+
+# change between all hyperlinks and the ones without the self-links
+write.csv(total, total.path)
+#write.csv(total, "./data_inter/total_noself.csv")
+```
+
+## Descriptive statistics
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE, fig.height=8, fig.width=8}
+
+# excluding year
+plot_histogram(total[,-4])
+
+# summary(total)
+# 
+# total %>% summary() %>% select(-(1:4)) %>%
+# kable()
+
+skim(total)
+```
+
+## Spageti plots
+
+The IO flows are quite stable contrary to the more erratic hyperlink-based flows.
+In both cases, some intra-regional flows appear have the highest values. 
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+for.plot <- total
+for.plot$outlier.io <- ifelse(for.plot$io>50000 & for.plot$year==2010, as.character(for.plot$id), "") #outlier 
+
+# change between all hyperlinks and the ones without the self-links
+#for.plot$outlier.hl <- ifelse(for.plot$hl>50000000 & (for.plot$year==2010 | for.plot$year==2004),
+#for.plot$outlier.hl <- ifelse(for.plot$hl>15000000 & (for.plot$year==2010 | for.plot$year==2004),
+for.plot$outlier.hl <- ifelse(for.plot$hl>100000 & (for.plot$year==2003 | for.plot$year==2006 | for.plot$year==2008 | for.plot$year==2009),
+                              as.character(for.plot$id), "") #outlier 
+
+tspag.io = 
+  ggplot(for.plot, aes(x=year, y=io, group = id, colour = id)) + 
+  geom_line() + guides(colour=FALSE) + xlab("Year") +
+  ylab("IO") +
+  geom_text_repel(aes(label=outlier.io), cex = 4) + #this line is from the previous version
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 1))
+plot(tspag.io)
+
+tspag.hl = 
+  ggplot(for.plot, aes(x=year, y=hl, group = id, colour = id)) + 
+  geom_line() + guides(colour=FALSE) + xlab("Year") +
+  ylab("Hyperlinks") +
+  geom_text_repel(aes(label=outlier.hl), cex = 4) + #this line is from the previous version
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 1))
+plot(tspag.hl)
+
+```
+
+## Scatter plots with all the observations
+
+The main hypothesis is that hyperlinks between commercial websites can capture IO flows aggregated at a regional level.
+**TODO:* work on the hypothesis.
+
+The first panel of yearly plots includes all the data. 
+While the fit is not very good in the begining of the study period, it looks very goodtowards the end. 
+Because there are a few outliers, the second panel excludes these outliers and the good fit is more obvious.
+
+
+```{r include=TRUE, echo=FALSE, results= 'markup', message=FALSE, warning = FALSE, fig.height=15, fig.width=10}
+
+y <- as.integer(2000:2010)
+
+for(i in y){
+  plot <- ggplot(data = total[total[,1]==i,],
+                 aes(x     = hl,
+                     y     = io))+
+    geom_point(size     = 1.2,
+               alpha    = .8)+
+    theme_minimal() +
+    scale_color_gradientn(colours = rainbow(100)) +
+    geom_smooth(method = "lm",
+                aes(),
+                se     = FALSE,
+                size   = .4, 
+                alpha  = .6) + # to add regression line
+    labs(title  = i)
+  sc <- paste("sc",i, sep = "")
+  assign(sc, plot) # assign object (x) to a name (model.name)
+}
+
+grid.arrange(
+  sc2000, sc2001, sc2002,
+  sc2003, sc2004, sc2005,
+  sc2006, sc2007, sc2008,
+  sc2009, sc2010, 
+  #layout_matrix = rbind(c(1,2),c(3,4),c(5,6), c(7,8),c(9,10), c(11, 12)),
+  top = "IO vs. hl"
+)
+```
+## Scatter plots no outliers
+
+I removed the following hl values: abs(hl - median(hl)) > 2*sd(hl)) 
+
+```{r include=TRUE, echo=FALSE, results= 'markup', message=FALSE, warning = FALSE, fig.height=15, fig.width=10}
+
+# # outlier values
+# hl.out <- 
+#   total %>% 
+#   group_by(year) %>% 
+#   boxplot.stats(hl)$out
+# 
+# hl.out <- boxplot.stats(total$hl)$out 
+# total.no.out <- total[!(total$hl %in% hl.out),]
+
+df1 = total %>%
+  group_by(year) %>%
+  filter(!(abs(hl - median(hl)) > 2*sd(hl))) #%>%
+
+y <- as.integer(2000:2010)
+for(i in y){
+  plot <- ggplot(data = df1[df1[,1]==i,],
+                 aes(x     = hl,
+                     y     = io))+
+    geom_point(size     = 1.2,
+               alpha    = .8)+
+    theme_minimal() +
+    scale_color_gradientn(colours = rainbow(100)) +
+    geom_smooth(method = "lm",
+                aes(),
+                se     = FALSE,
+                size   = .4, 
+                alpha  = .6) + # to add regression line
+    labs(title  = i)
+  sc <- paste("sc_no_out",i, sep = "")
+  assign(sc, plot) # assign object (x) to a name (model.name)
+}
+
+grid.arrange(
+  sc_no_out2000, sc_no_out2001, sc_no_out2002,
+  sc_no_out2003, sc_no_out2004, sc_no_out2005,
+  sc_no_out2006, sc_no_out2007, sc_no_out2008,
+  sc_no_out2009, sc_no_out2010, 
+  #layout_matrix = rbind(c(1,2),c(3,4),c(5,6), c(7,8),c(9,10), c(11, 12)),
+  top = "IO vs. hl, no hl outliers"
+)
+```
+
+## Correletions
+
+The previous observations from the scatter plots are also reflected on the correlations too.
+
+```{r echo=FALSE, results= 'markup', message=FALSE, warning = FALSE, , fig.height=10, fig.width=10}
+cor.mat <- subset(total, select = c(id, year, io, hl))
+cor.mat <- reshape(cor.mat, direction = "wide", idvar = "id", timevar = "year")
+cor.mat <- merge(cor.mat, nuts.dist, by = "id", all.x = T)
+cor.mat <- dplyr::select( cor.mat, id, io.2000, io.2001, io.2002, io.2003, io.2004, io.2005, io.2006, io.2007, io.2008, io.2009, io.2010,
+                          hl.2000, hl.2001, hl.2002, hl.2003, hl.2004, hl.2005, hl.2006, hl.2007, hl.2008,hl.2009, hl.2010, dist)
+
+# correlation between IO and hyperlinks
+cor.io.hl <- total %>%
+  group_by(year) %>%
+  summarize(COR_io_hl=cor(io,hl))
+kable(cor.io.hl)
+
+# correlation between IO and dist
+cor.io.dist <- total %>%
+  group_by(year) %>%
+  summarize(COR_io_dist=cor(io,dist))
+kable(cor.io.dist)
+
+# Correlogram
+cor.mat <- cor(cor.mat[,-1])
+corrplot(cor.mat, type="upper",method = "number", number.cex = .5, tl.cex = .75)
+```
+
+## Maps
+
+This needs more work. 
+**@George** let's talk
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+
+wgs84 = '+proj=longlat +datum=WGS84'
+nuts.shp <- spTransform(nuts.shp, CRS(wgs84))
+
+# select a subset with flows
+total_flows <- select(total, orig, dest, hl, io, year) 
+total_flows <-od2line(flow = total_flows, zones = nuts.shp, zone_code = "NUTS_ID")   
+
+# We transform the new spatial object to WGS84.
+total_flows <- spTransform(total_flows, CRS(wgs84))
+
+
+Flow_pal <- colorQuantile("YlOrBr", domain = total_flows$hl, n=5)
+
+leaflet() %>%
+  addTiles() %>%
+  addPolylines(
+    data = total_flows,
+    weight = 1, # Notice the different value for better visual effect when zoom in
+    color = ~Flow_pal(hl),
+    opacity = .8, # as above
+    group = total_flows$year) %>%
+  addLayersControl(
+    position = "bottomleft",
+    overlayGroups = unique(total_flows$year),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+  addLegend("topright",
+          pal = Flow_pal,
+          values = total_flows$hl,
+          title = "hl")
+
+```

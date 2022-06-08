@@ -1,0 +1,329 @@
+---
+title: "Maps_Paper"
+date: "15/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, "./outputs")
+library(readr)
+library(rgdal)
+library(sf)
+library(tmap)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(GGally)
+library(RColorBrewer)
+library(ggpubr)
+library(ggsn)
+library(rprojroot)
+library(readxl)
+library(stplanr)
+library(png)
+```
+
+
+```{r Load Data}
+
+# This is the project path
+path <- find_rstudio_root_file()
+
+# Load Data
+
+# NUTS
+
+NUTS210_2000 <- read_csv(paste0(path, "/data/NUTS210_hyperlinks/weighted/NUTS210_2000_new.csv"), col_types = cols(X1 = col_skip()))
+                         
+
+NUTS210_2010 <- read_csv(paste0(path, "/data/NUTS210_hyperlinks/weighted/NUTS210_2010_new.csv") , col_types = cols(X1 = col_skip()))
+
+NUTS210_2000$Year <- 2000
+NUTS210_2010$Year <- 2010
+
+Full_NUTS <- rbind(NUTS210_2000, NUTS210_2010)
+
+# Trade
+
+files.url <- paste0(path, "/data/IO/")
+files <- list.files(path=files.url)
+
+n <- 1999
+total.y <- data.frame(matrix(NA, ncol=1, nrow=1369))[-1]
+
+for(i in files){
+  file <- paste(files.url, i, sep = "")
+  y.names <- read_excel(file, col_names = F)
+  # keep only the flows and not the NUTS/Sector information
+  length <- dim(y.names)[1]
+  y <- y.names[3:length, 3:length]
+  # convert flows to numeric
+  y <- sapply(y, function(x) as.numeric(x))
+  # create a vector with the NUTS2 and sector information
+  y.names.c <- y.names[-(1:2),1:2]
+  # create nuts_sector id
+  y.names.c$name <- paste(y.names.c$...1, y.names.c$...2, sep = "_")
+  rownames(y) <- y.names.c$name
+  colnames(y) <- y.names.c$name
+  
+  # drop the sector info
+  m <- y
+  dimnames(m) <- lapply(dimnames(m), substr, 1, 4)
+  # create the sums by NUTS
+  m <- xtabs(Freq~ Var1 + Var2, as.data.frame.table(m))
+  # from OD to edge list
+  m <- odmatrix_to_od(m) 
+  m$orig <- as.character(m$orig)
+  # m$orig <- substr(m$orig,1,nchar(m$orig)-4)
+  m$dest <- as.character(m$dest)
+  # y$dest <- substr(y$dest,1,nchar(y$dest)-4)
+  
+  m$id <- paste0(m$orig, "_", m$dest)
+  m$flow <- as.numeric(as.character(m$flow))
+  
+  # rename flow variable with year id
+  n <- n +1
+  names(m)[names(m) == "flow"] <- paste("y", n, sep="") 
+  #assign(paste("y", n, sep=""), m$flow )
+  total.y <- cbind(total.y,m)
+}
+# remove duplicated columns
+total.y <- total.y[!duplicated(as.list(total.y))]
+total.y <- total.y[,c(4,1,2,3,5:14)]
+
+# change UKD2 for UKD6, UKD5 to UKD7, UKM2 to UMK5,UKM3 to UKM7
+# previous WRONG change UKD2 for UKD6 and UKD3 to UKD7
+
+df <- data.frame(lapply(total.y[,(1:3)], function(x) gsub("UKD2", "UKD6", x)))
+df <- data.frame(lapply(df, function(x) gsub("UKD5", "UKD7", x)))
+
+total.y <- cbind(df, total.y[,-(1:3)])
+
+# Convert to same format as NUTS
+
+## 2000
+
+Trade_2000 <- total.y[,c(2,3,4)]
+names(Trade_2000) <- c("origin", "destination", "weight")
+
+## 2010
+
+Trade_2010 <- total.y[c(2,3,14)]
+names(Trade_2010) <- c("origin", "destination", "weight")
+
+## combine
+
+Trade_2000$Year <- 2000
+Trade_2010$Year <- 2010
+Full_Trade <- rbind(Trade_2000, Trade_2010)
+
+# Shapefile
+shp <- readOGR(dsn = paste0(path, "/data/spatial"), layer = "NUTS_RG_01M_2010_4326_LEVL_2")
+
+shp_UK <- subset(shp, NUTS_ID %in% NUTS210_2010$origin) #remove europe
+
+centroids <- SpatialPointsDataFrame(coordinates(shp), data = as(shp, "data.frame")[c("NUTS_ID")]) #get Lat long
+```
+
+```{r Plotting}
+
+# Prepare data
+
+## NUTS
+
+Mapping_NUTS <- merge(Full_NUTS, centroids, by.x="origin", by.y="NUTS_ID")
+Mapping_NUTS <- merge(Mapping_NUTS, centroids, by.x="destination", by.y = "NUTS_ID")
+
+Mapping_NUTS <- Mapping_NUTS %>%
+  filter(Mapping_NUTS$weight>1)
+
+## Trade
+Mapping_Trade <- merge(Full_Trade, centroids, by.x="origin", by.y="NUTS_ID")
+Mapping_Trade <- merge(Mapping_Trade, centroids, by.x="destination", by.y = "NUTS_ID")
+
+Mapping_Trade <- Mapping_Trade %>%
+  filter(Mapping_Trade$weight>100)
+
+# Map extents
+
+xquiet<- scale_x_continuous("", breaks=NULL)
+yquiet<-scale_y_continuous("", breaks=NULL)
+quiet<-list(xquiet, yquiet)
+
+# NUTS 2000
+
+gg1 <- ggplot(Mapping_NUTS[which(Mapping_NUTS$Year<2001),], aes(coords.x2.x, coords.x1.x))+
+  #The "alpha=" is line transparency and used below 
+  geom_segment(aes(y=coords.x2.x, x=coords.x1.x,yend=coords.x2.y, xend=coords.x1.y, alpha=weight), col="white", show.legend = FALSE, size = 0.4)+
+  #line transparency - essential to make the plot readable
+  scale_alpha_continuous(range = c(0.08, 0.2))+
+  #Set black background, ditch axes and fix aspect ratio
+  theme(panel.background = element_rect(fill='black',colour='black'))+coord_equal()+quiet+
+  borders("world", regions = "UK", size = 0.3)+
+  ggtitle("Hyperlinks 2000")
+  #facet_wrap(~Year)
+
+# NUTS 2010
+gg2 <- ggplot(Mapping_NUTS[which(Mapping_NUTS$Year>2009),], aes(coords.x2.x, coords.x1.x))+
+  #The "alpha=" is line transparency and used below 
+  geom_segment(aes(y=coords.x2.x, x=coords.x1.x,yend=coords.x2.y, xend=coords.x1.y, alpha=weight), col="white", show.legend = FALSE, size = 0.2)+
+  #line transparency - essential to make the plot readable
+  scale_alpha_continuous(range = c(0.08, 0.2))+
+  #Set black background, ditch axes and fix aspect ratio
+  theme(panel.background = element_rect(fill='black',colour='black'))+coord_equal()+quiet+
+  borders("world", regions = "UK", size = 0.3)+
+  ggtitle("Hyperlinks 2010")
+  #facet_wrap(~Year)
+
+# Plot Trade
+
+## Trade 2000
+
+gg3 <- ggplot(Mapping_Trade[which(Mapping_Trade$Year<2001),], aes(coords.x2.x, coords.x1.x))+
+  #The "alpha=" is line transparency and used below 
+  geom_segment(aes(y=coords.x2.x, x=coords.x1.x,yend=coords.x2.y, xend=coords.x1.y, alpha=weight), col="white", show.legend = FALSE, size = 0.3)+
+  #line transparency - essential to make the plot readable
+  scale_alpha_continuous(range = c(0.08, 0.2))+
+  #Set black background, ditch axes and fix aspect ratio
+  theme(panel.background = element_rect(fill='black',colour='black'))+coord_equal()+quiet+
+  borders("world", regions = "UK", size = 0.3)+
+  ggtitle("Trade 2000") 
+  #facet_wrap(~Year)
+
+## Trade 2010
+
+gg4 <- ggplot(Mapping_Trade[which(Mapping_Trade$Year>2009),], aes(coords.x2.x, coords.x1.x))+
+  #The "alpha=" is line transparency and used below 
+  geom_segment(aes(y=coords.x2.x, x=coords.x1.x,yend=coords.x2.y, xend=coords.x1.y, alpha=weight), col="white", show.legend = FALSE, size = 0.3)+
+  #line transparency - essential to make the plot readable
+  scale_alpha_continuous(range = c(0.08, 0.2))+
+  #Set black background, ditch axes and fix aspect ratio
+  theme(panel.background = element_rect(fill='black',colour='black'), plot.title = element_text(lineheight=.8))+coord_equal()+quiet+
+  borders("world", regions = "UK", size=0.3)+
+  ggtitle("Trade 2010")
+  #facet_wrap(~Year)
+
+# Plot all 4 together
+
+  graphs <- ggarrange(
+  gg1, gg2, gg3, gg4,ncol = 2, nrow = 2)
+
+#save to outputs
+ggsave(file="outputs/flow_maps.png", graphs, dpi = 600)
+```
+
+```{r Mapping Predictions}
+lad <- readOGR("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson")
+# also saved locally under \data\lad\Local_Authority_Districts_(December_2019)_Boundaries_UK_BUC.geojson 
+
+# projection
+proj4string(lad) <- CRS("+init=epsg:4326") #define projection
+
+# LAD data
+LAD_bham_ex <- read_csv(paste0(path, "/data_inter/lad_prediction_bham_ex.csv"), col_types = cols_only(model.all2009 = col_guess(),  orig = col_guess(), dest = col_guess()))
+LAD_bham_im <- read_csv(paste0(path, "/data_inter/lad_prediction_bham_im.csv"), col_types = cols_only(model.all2009 = col_guess(),  orig = col_guess(), dest = col_guess()))
+LAD_camd_ex <- read_csv(paste0(path, "/data_inter/lad_prediction_camd_ex.csv"), col_types = cols_only(model.all2009 = col_guess(),  orig = col_guess(), dest = col_guess()))
+LAD_camd_im <- read_csv(paste0(path, "/data_inter/lad_prediction_camd_im.csv"), col_types = cols_only(model.all2009 = col_guess(),  orig = col_guess(), dest = col_guess()))
+
+# get correct order for od2line
+LAD_bham_ex <- LAD_bham_ex[, c(2,3,1)]
+LAD_bham_im <- LAD_bham_im[, c(2,3,1)]
+LAD_camd_ex <- LAD_camd_ex[, c(2,3,1)]
+LAD_camd_im <- LAD_camd_im[, c(2,3,1)]
+LAD_ab_ex <- LAD_ab_ex[, c(2,3,1)]
+LAD_ab_im <- LAD_ab_im[, c(2,3,1)]
+
+# ensure largest flows plotted last
+LAD_bham_ex <- LAD_bham_ex %>%
+  arrange(model.all2009)
+LAD_bham_ex <- LAD_bham_ex %>% filter(model.all2009 < 20000)
+tf_LAD_bham_ex <-od2line(flow = LAD_bham_ex, zones = lad, zone_code = "lad19cd") 
+tf_LAD_bham_ex@data$lwd <- log(tf_LAD_bham_ex@data$model.all2009)/3
+
+LAD_bham_im <- LAD_bham_im %>%
+  arrange(model.all2009)
+LAD_bham_im <- LAD_bham_im %>% filter(model.all2009 < 20000)
+tf_LAD_bham_im <-od2line(flow = LAD_bham_im, zones = lad, zone_code = "lad19cd") 
+tf_LAD_bham_im@data$lwd <- log(tf_LAD_bham_im@data$model.all2009)/3
+
+LAD_camd_ex <- LAD_camd_ex %>%
+  arrange(model.all2009)
+LAD_camd_ex <- LAD_camd_ex %>% filter(model.all2009 < 20000)
+tf_LAD_camd_ex <-od2line(flow = LAD_camd_ex, zones = lad, zone_code = "lad19cd") 
+tf_LAD_camd_ex@data$lwd <- log(tf_LAD_camd_ex@data$model.all2009)/3
+
+LAD_camd_im <- LAD_camd_im %>%
+  arrange(model.all2009)
+LAD_camd_im <- LAD_camd_im %>% filter(model.all2009 < 20000)
+tf_LAD_camd_im <-od2line(flow = LAD_camd_im, zones = lad, zone_code = "lad19cd") 
+tf_LAD_camd_im@data$lwd <- log(tf_LAD_camd_im@data$model.all2009)/3
+
+#plot with tmap
+flow_bham_ex <- tm_shape(lad)+tm_borders(lwd = 0.5)+
+  tm_shape(tf_LAD_bham_ex) + 
+  tm_lines(
+    title.col = "Predicted Flows",
+    #palette = "plasma", style = "quantile",
+    palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    col = "model.all2009",
+    lwd = "lwd",
+    alpha = 0.7,
+    scale = 0.7,
+    legend.lwd.show = F,
+  ) +
+  tm_compass(north = 0, position=c("right", "top"), size = 0.7, text.size = 0.7) +
+  tm_scale_bar(position=c("left", "bottom")) +
+  tm_layout(legend.position = c("left", "top"), legend.text.size = 0.6)
+  
+flow_bham_im <- tm_shape(lad)+tm_borders(lwd = 0.5)+
+  tm_shape(tf_LAD_bham_im) + 
+  tm_lines(
+    title.col = "Predicted Flows",
+    #palette = "plasma", style = "quantile",
+    palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    col = "model.all2009",
+    lwd = "lwd",
+    alpha = 0.7,
+    scale = 0.7,
+    legend.lwd.show = F,
+  ) +
+  tm_compass(north = 0, position=c("right", "top"), size = 0.7, text.size = 0.7) +
+  tm_scale_bar(position=c("left", "bottom")) +
+  tm_layout(legend.position = c("left", "top"), legend.text.size = 0.6)
+
+flow_camd_ex <- tm_shape(lad)+tm_borders(lwd = 0.5)+
+  tm_shape(tf_LAD_camd_ex) + 
+  tm_lines(
+    title.col = "Predicted Flows",
+    #palette = "plasma", style = "quantile",
+    palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    col = "model.all2009",
+    lwd = "lwd",
+    alpha = 0.7,
+    scale = 0.7,
+    legend.lwd.show = F,
+  ) +
+  tm_compass(north = 0, position=c("right", "top"), size = 0.7, text.size = 0.7) +
+  tm_scale_bar(position=c("left", "bottom")) +
+  tm_layout(legend.position = c("left", "top"), legend.text.size = 0.6)
+
+flow_camd_im <- tm_shape(lad)+tm_borders(lwd = 0.5)+
+  tm_shape(tf_LAD_camd_im) + 
+  tm_lines(
+    title.col = "Predicted Flows",
+    #palette = "plasma", style = "quantile",
+    palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    col = "model.all2009",
+    lwd = "lwd",
+    alpha = 0.7,
+    scale = 0.7,
+    legend.lwd.show = F,
+  ) +
+  tm_compass(north = 0, position=c("right", "top"), size = 0.7, text.size = 0.7) +
+  tm_scale_bar(position=c("left", "bottom")) +
+  tm_layout(legend.position = c("left", "top"), legend.text.size = 0.6)
+
+save <- tmap_arrange(flow_bham_ex, flow_bham_im, flow_camd_ex, flow_camd_im, ncol = 2)
+tmap_save(save, "Predictions.png", dpi = 450)
+```
+

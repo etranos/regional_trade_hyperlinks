@@ -1,0 +1,9 @@
+- [x] create another data sample including websites with more than one postcodes (GW)
+- [x] re-run the analysis for the above extended sample (ET). [similar results]
+- [x] re-run the analysis for a revised sample with binary links. [similar results]
+- [x] re-run the analysis for all the sectors (ET). [The results indicate some sectors doing worst than others. ACI says they make sense based on sector attributes]
+- [x] make a map(s) of the network flows (GW)
+- [x] write the data section (GW – we can use some of the previous papers we did; ET will provide info). [Let’s do that after we finish intro/lit rev]
+- [x] Finish writing (ET/ACI – let’s talk about how we can split the remaining parts). [ACI did you have a chance to work on the literature review]
+- [x] Can you guys think of any potential extensions/applications to a city? We can’t really validate the following, but would it make any sense to produce a further ‘disaggregation’ for, let’s West Midlands local authorities or Built Up areas or something like this to show the value of the individual data we have? [ACI any thoughts on the disaggregation idea and someway to (semi)validate it even in a qualitative manner]
+- potential outlets: Annals of AAG, Journal of Regional Science, EPB, Regional Science and Urban Economics… Not any concrete thoughts yet.

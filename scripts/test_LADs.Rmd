@@ -1,0 +1,265 @@
+---
+title: "Test on LADs"
+author: "Emmanouil Tranos"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "./outputs")
+  })
+---
+
+```{r settings, echo=FALSE, results= 'hide', message=FALSE}
+library(raster)
+library(knitr)
+library(randomForest)
+library(tidyverse)
+library(gridExtra)
+library(caret)
+library(rprojroot)
+library(rgdal)
+library(geosphere)
+
+options(scipen=999)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load models 
+
+```{r}
+models.path <- paste(path, "/data_inter/test_t2.RData", sep = "")
+load(models.path)
+```
+
+## LADs data
+
+These are the LAD-to-LAD counts based on websites with a unique postcode. 
+We are using the weighted hyperlinks -- that is multiple hyperlinks between 
+websites are considered instead of being transformed to $1$.
+
+```{r}
+lad.hl.2010 <- read_csv("C:/Users/nw19521/DataShare/Hyperlink_networks (George Willis)/Hyperlinks_RProject/Created_data/links_domain_single_pc/Weighted_Degree/LADs/LADS_2010_new.csv")
+
+# set.seed(965)
+lad.hl.2010 <- lad.hl.2010 %>% 
+  mutate(year = 2010,
+        id = paste(origin, destination, sep = "_")) %>% 
+  #        dist = sample(1000, size = 14720, replace = TRUE),
+  #        #dist.radius = sample(1000, size = 14720, replace = TRUE),
+  #        emp_thousands.orig = sample(1000, size = 14720, replace = TRUE),
+  #        #pop_total.orig = sample(1000, size = 14720, replace = TRUE),
+  #        pop_density.orig = sample(1000, size = 14720, replace = TRUE),
+  #        emp_thousands.dest = sample(1000, size = 14720, replace = TRUE),
+  #        #pop_total.dest = sample(1000, size = 14720, replace = TRUE),
+  #        pop_density.dest = sample(1000, size = 14720, replace = TRUE)) %>% 
+  #        #central.orig = sample(1000, size = 14720, replace = TRUE),
+  #        #central.dest = sample(1000, size = 14720, replace = TRUE)) %>% 
+  rename(orig = origin,
+         dest = destination,
+         hl = weight)
+
+# lad.hl.2010.gb <- lad.hl.2010_ %>% 
+#   filter(!str_detect(dest, "^N") &
+#            !str_detect(orig, "^N")) 
+```
+
+## LADs distance
+
+```{r}
+lad <- readOGR("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson")
+# also saved locally under \data\lad\Local_Authority_Districts_(December_2019)_Boundaries_UK_BUC.geojson 
+
+# projection
+proj4string(lad) <- CRS("+init=epsg:4326") #define projection
+
+# centroids
+lad.cent <- centroid(lad)
+
+# distance
+lad.dist <- distm(lad.cent)
+rownames(lad.dist) <- lad@data$lad19cd
+colnames(lad.dist) <- lad@data$lad19cd
+
+lad.dist <- reshape2::melt(lad.dist)
+lad.dist$id <- paste0(lad.dist$Var1, "_", lad.dist$Var2)
+lad.dist$Var1 <- NULL
+lad.dist$Var2 <- NULL
+names(lad.dist)[1] <- "dist"
+
+# radius to replace internal distances
+r <- lad@data %>%
+  mutate(dist.radius = (sqrt(area(lad)/pi))) %>% # /1000, it should be in m.
+  mutate(id = paste(lad19cd, lad19cd, sep = "_")) %>%
+  dplyr::select(id, dist.radius) 
+  
+lad.dist <- merge(lad.dist, r, by = "id", all.x = T)
+lad.dist$dist.radius <- ifelse(lad.dist$dist==0, lad.dist$dist.radius, lad.dist$dist)
+lad.dist$diam <- NULL
+
+#lad.hl.2010.noNAs <- merge(lad.hl.2010,lad.dist, by = "id")
+lad.hl.2010.noNAs <- merge(lad.hl.2010, lad.dist, by = "id", all.y = T)
+
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  mutate(orig = substring(id,1,9),
+         dest = substring(id, 11,20),
+         hl = ifelse(is.na(hl),0,hl),
+         year = 2010) %>% 
+  dplyr::select(-X1)
+```
+
+## Missing LADs 
+
+These are the LADs we are missing because of boundary changes.
+
+```{r}
+lad.hl.2010.withNAs <- merge(lad.hl.2010,lad.dist, by = "id", all.x = T)
+
+sapply(lad.hl.2010.withNAs, function(x) sum(is.na(x)))
+
+
+missing.lad <- lad.hl.2010.withNAs[is.na(lad.hl.2010.withNAs$dist),]
+missing.lad <- unique(c(unique(missing.lad$orig),
+                 unique(missing.lad$dest)))
+missing.lad <- sort(missing.lad)
+missing.lad <- as.data.frame(missing.lad)
+missing.lad <- merge(missing.lad, lad@data, by.x = "missing.lad", by.y = "lad19cd",
+                     all.x = T)
+sapply(missing.lad, function(x) sum(is.na(x)))
+missing.lad <- missing.lad[is.na(missing.lad$objectid),]
+missing.lad <- missing.lad$missing.lad
+missing.lad
+```
+
+## LADs employment and pop density data
+
+```{r}
+emp <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_172_1.data.csv?geography=1820327937...1820328307&date=latestMINUS5&industry=37748736&employment_status=1&measure=1&measures=20100") %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, OBS_VALUE) 
+
+pop <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_2002_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS9&gender=0&c_age=200&measures=20100") %>% 
+    dplyr::select(GEOGRAPHY_CODE, OBS_VALUE) 
+
+lad.hl.2010.noNAs <- merge(lad.hl.2010.noNAs, emp, by.x = "orig", by.y = "GEOGRAPHY_CODE")
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  rename(emp_thousands.orig = OBS_VALUE,
+         lad.orig = GEOGRAPHY_NAME)
+
+lad.hl.2010.noNAs <- merge(lad.hl.2010.noNAs, emp, by.x = "dest", by.y = "GEOGRAPHY_CODE")
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  rename(emp_thousands.dest = OBS_VALUE,
+         lad.dest = GEOGRAPHY_NAME)
+
+lad.hl.2010.noNAs <- merge(lad.hl.2010.noNAs, pop, by.x = "orig", by.y = "GEOGRAPHY_CODE")
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  rename(pop.orig = OBS_VALUE)
+
+lad.hl.2010.noNAs <- merge(lad.hl.2010.noNAs, pop, by.x = "dest", by.y = "GEOGRAPHY_CODE")
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  rename(pop.dest = OBS_VALUE)
+
+crs(lad)
+lad$area_sqkm <- area(lad) / 1000000
+area_sqkm <- lad@data %>% 
+  dplyr::select(lad19cd, area_sqkm)
+
+lad.hl.2010.noNAs <- merge(lad.hl.2010.noNAs, area_sqkm, by.x = "dest", by.y = "lad19cd")
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  mutate(pop_density.dest = pop.dest / area_sqkm) %>% 
+  dplyr::select(-pop.dest, -area_sqkm)
+
+lad.hl.2010.noNAs <- merge(lad.hl.2010.noNAs, area_sqkm, by.x = "orig", by.y = "lad19cd")
+lad.hl.2010.noNAs <- lad.hl.2010.noNAs %>% 
+  mutate(pop_density.orig = pop.orig / area_sqkm) %>% 
+  dplyr::select(-pop.orig, -area_sqkm)
+```
+
+## Test using the model trained on NUTS2 data
+
+I am using the $2009$ model, which was trained on data from $2008$ and $2009$ to 
+predict trade for $2010$ for LADs.
+
+```{r}
+pred <- predict(fit.model.all[names(fit.model.all)=="model.all2009"], lad.hl.2010.noNAs)
+glimpse(pred)
+
+lad.prediction <- cbind(as.data.frame(pred),lad.hl.2010.noNAs)
+
+# both imports and exports -- not useful
+# lad.prediction.bham <- lad.prediction %>% 
+#   filter(orig == "E08000025" |
+#            dest == "E08000025") %>% 
+#   arrange(-model.all2009)
+
+# exports from Birmingham
+lad.prediction.orig.bham <- lad.prediction %>% 
+  filter(orig == "E08000025") %>% 
+  arrange(-model.all2009)
+
+# imports to Birmingham
+lad.prediction.dest.bham <- lad.prediction %>% 
+  filter(dest == "E08000025") %>% 
+  arrange(-model.all2009)
+
+# exports from Aberdeen
+lad.prediction.orig.ab <- lad.prediction %>% 
+  filter(orig == "S12000033") %>% 
+  arrange(-model.all2009)
+
+# imports to Aberdeen
+lad.prediction.dest.ab <- lad.prediction %>% 
+  filter(dest == "S12000033") %>% 
+  arrange(-model.all2009)
+
+# exports from Camden
+lad.prediction.orig.camd <- lad.prediction %>% 
+  filter(orig == "E09000007") %>% 
+  arrange(-model.all2009)
+
+# imports to Camden
+lad.prediction.dest.camd <- lad.prediction %>% 
+  filter(dest == "E09000007") %>% 
+  arrange(-model.all2009)
+```
+
+## Map the Bham trade links
+
+In Maps.Rmd
+
+## export data
+
+```{r}
+# all LAD predictions
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction.csv", sep = "")
+write_csv(lad.prediction, lad.prediction.path)
+
+# Bhma exports
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction_bham_ex.csv", sep = "")
+write_csv(lad.prediction.orig.bham, lad.prediction.path)
+
+# Bham imports
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction_bham_im.csv", sep = "")
+write_csv(lad.prediction.dest.bham, lad.prediction.path)
+
+# Aberdeen exports
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction_ab_ex.csv", sep = "")
+write_csv(lad.prediction.orig.ab, lad.prediction.path)
+
+# Aberdeen imports
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction_ab_im.csv", sep = "")
+write_csv(lad.prediction.dest.ab, lad.prediction.path)
+
+# Camden exports
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction_camd_ex.csv", sep = "")
+write_csv(lad.prediction.orig.camd, lad.prediction.path)
+
+# Camden imports
+lad.prediction.path <- paste(path, "/data_inter/lad_prediction_camd_im.csv", sep = "")
+write_csv(lad.prediction.dest.camd, lad.prediction.path)
+```
+
+

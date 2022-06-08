@@ -1,0 +1,116 @@
+---
+title: "Untitled"
+author: "Emmanouil Tranos"
+date: "12/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+## Train on t
+
+# split the data by year into a list
+#by.year <- split(total, total$year)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   savePredictions = 'final')
+
+# run the model for every 2 years
+years <- 2000:2010
+
+for (t in years){
+  tplus1 <- t + 1
+  set.seed(71)
+  model.all <- randomForest(io ~ hl + dist + emp_thousands.orig + emp_thousands.dest + 
+                                               + pop_density.orig + pop_density.dest, 
+                 data = total[total$year==t | total$year==tplus1,],
+                 trControl = tc, importance = TRUE)
+  #paste("model", t + 1, t + 2, sep="_")
+  assign(paste0("model.all",as.character(t + 1)), model.all)
+}
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.all20"))
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+summary(fit.model.all.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.all.res, scales=scales)
+
+# plot variable importance
+
+# TODO: fix the year labels
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+#lapply(fit.year, function(x) plot(varImp(x), main = names(x)))
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+#lapply(fit.year, function(x) plot(varImp(x), main = names(x)))
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+# for a reference point
+total %>% group_by(year) %>%
+  summarise(min = min(io), max=max(io),
+            mean = mean(io), median = median(io)) %>%
+  round(2) %>% kable()
+
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainined in year t to predict io of year t + 1
+years <- (2001:2009)
+pred.by.year.all <- data.frame(matrix(NA,nrow=1369, ncol = 0))
+for (t in years){
+  t_plus_1 <- t + 1
+  pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",t)], total[total$year==t_plus_1,])
+  pred <- as.data.frame(pred)
+  rownames(pred) <- c()
+  pred.by.year.all <- cbind(pred.by.year.all, pred)
+}
+#change column names to match with total
+names(pred.by.year.all) <- 2002:2010
+# wide to long
+pred.by.year.all <- gather(pred.by.year.all,key = year,value = predictions,1:9)
+# drop 2000 and select variables form total
+total.no2000_1 <- total %>% 
+  filter(year!=2000 & year!=2001) %>% 
+  dplyr::select(id, year, io)
+# column bind prediction and data  
+pred.by.year.all <- cbind(pred.by.year.all, total.no2000_1)
+# pred.by.year to list by year
+pred.by.year.all.list <- split(pred.by.year.all, pred.by.year.all$year)
+# calculate metrics for every year
+rf.year.all.metrics <- lapply(pred.by.year.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$io))
+rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
+
+# there are 2 columns named year, so I drop one
+pred.by.year.all$year <- NULL
+
+ggplot(data = pred.by.year.all,aes(x = io, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
+```

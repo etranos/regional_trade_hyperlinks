@@ -1,0 +1,407 @@
+---
+title: "I/O and hyperlinks, yearly with `caret()`"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "./outputs")
+  })
+---
+  
+```{r settings, echo=FALSE, results= 'hide', message=FALSE}
+library(knitr)
+library(randomForest)
+library(data.table)
+#library(stplanr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+#library(readxl)
+#library(httr)
+#library(tidyverse)
+#library(rgdal)
+#library(geospacom)
+#library(corrplot)
+library(gridExtra)
+#library(ggrepel)
+#library(igraph)
+#library(leaflet)
+library(caret)
+#library(DataExplorer)
+#library(skimr)
+library(doParallel)
+library(xgboost)
+library(rprojroot)
+
+options(scipen=999)
+
+#knitr::opts_knit$set(root.dir = 'C:/Users/nw19521/DataShare/Regional positioning in GVC and networks (Andre Carrascal Incera)')
+#setwd("C:/Users/nw19521/DataShare/Regional positioning in GVC and networks (Andre Carrascal Incera)")
+
+# start parallel
+cl <- makePSOCKcluster(16)
+registerDoParallel(cl)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+# change between all hyperlinks and the ones without the self-links
+
+total.path <- paste(path, "/data_inter/total.csv", sep = "")
+
+total <- read.csv(total.path)
+#total <- read.csv("./data_inter/total_noself.csv")
+
+total$X <- NULL
+
+## this is to keep sectors
+# y <- y[V1 %like% "^UK" & V1 %like% "ss15$",]          # keep UK and ss15 rows
+# y <- y[, .SD, .SDcols = names(y) %like% "^UK" &       # # keep UK and ss15 columns
+#            names(y) %like% "ss15$"| names(y) %like% "V1"]
+# dim(y)
+# y <- as.matrix(y)
+# rownames(y) <- y[,1]
+# y <- y[,-1]
+```
+
+## Model with `caret()`: train on year t and t + 1 with CV, report accuracy, test on t + 2 (unseen data)
+### all variables
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+## Train on t
+
+# split the data by year into a list
+#by.year <- split(total, total$year)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   savePredictions = 'final')
+
+# run the model for every 2 years
+years <- 2000:2010
+
+for (t in years){
+  tplus1 <- t + 1
+  set.seed(71)
+  model.all <- train(io ~ hl + dist + emp_thousands.orig + emp_thousands.dest + 
+                                               + pop_density.orig + pop_density.dest, 
+                 data = total[total$year==t | total$year==tplus1,],
+                 trControl = tc,
+                 method = "rf", importance = TRUE)
+  #paste("model", t + 1, t + 2, sep="_")
+  assign(paste0("model.all",as.character(t + 1)), model.all)
+}
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.all20"))
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+summary(fit.model.all.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.all.res, scales=scales)
+
+# plot variable importance
+
+# TODO: fix the year labels
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+#lapply(fit.year, function(x) plot(varImp(x), main = names(x)))
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+# for a reference point
+total %>% group_by(year) %>%
+  summarise(min = min(io), max=max(io),
+            mean = mean(io), median = median(io)) %>%
+  round(2) %>% kable()
+
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainined in year t to predict io of year t + 1
+years <- (2001:2009)
+pred.by.year.all <- data.frame(matrix(NA,nrow=1369, ncol = 0))
+for (t in years){
+  t_plus_1 <- t + 1
+  pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",t)], total[total$year==t_plus_1,])
+  pred <- as.data.frame(pred)
+  rownames(pred) <- c()
+  pred.by.year.all <- cbind(pred.by.year.all, pred)
+}
+#change column names to match with total
+names(pred.by.year.all) <- 2002:2010
+# wide to long
+pred.by.year.all <- gather(pred.by.year.all,key = year,value = predictions,1:9)
+# drop 2000 and select variables form total
+total.no2000_1 <- total %>% 
+  filter(year!=2000 & year!=2001) %>% 
+  dplyr::select(id, year, io)
+# column bind prediction and data  
+pred.by.year.all <- cbind(pred.by.year.all, total.no2000_1)
+# pred.by.year to list by year
+pred.by.year.all.list <- split(pred.by.year.all, pred.by.year.all$year)
+# calculate metrics for every year
+rf.year.all.metrics <- lapply(pred.by.year.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$io))
+rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
+
+# there are 2 columns named year, so I drop one
+pred.by.year.all$year <- NULL
+
+ggplot(data = pred.by.year.all,aes(x = io, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
+```
+
+## Model with `caret()`: train on year t and t + 1 with CV, report accuracy, test on t + 2 (unseen data)
+### no distance
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+## Train on t
+
+# split the data by year into a list
+#by.year <- split(total, total$year)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   savePredictions = 'final')
+
+# run the model for every 2 years
+years <- 2000:2010
+
+for (t in years){
+  tplus1 <- t + 1
+  set.seed(71)
+  model.nodist <- train(io ~ hl + emp_thousands.orig + emp_thousands.dest + 
+                       + pop_density.orig + pop_density.dest, # dist
+                     data = total[total$year==t | total$year==tplus1,],
+                     trControl = tc,
+                     method = "rf", importance = TRUE)
+  #paste("model", t + 1, t + 2, sep="_")
+  assign(paste0("model.nodist",as.character(t + 1)), model.nodist)
+}
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# create a list of the above model outputs
+fit.model.nodist <- mget(ls(pattern = "^model.nodist20"))
+
+# resamples
+fit.model.nodist.res <- resamples(fit.model.nodist)
+summary(fit.model.nodist.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.nodist.res, scales=scales)
+
+# plot variable importance
+
+# TODO: fix the year labels
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+#lapply(fit.year, function(x) plot(varImp(x), main = names(x)))
+lapply(names(fit.model.nodist), function(x) plot(varImp(fit.model.nodist[[x]]), main=as.character(x)))
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+# for a reference point
+total %>% group_by(year) %>%
+  summarise(min = min(io), max=max(io),
+            mean = mean(io), median = median(io)) %>%
+  round(2) %>% kable()
+
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainined in year t to predict io of year t + 1
+years <- (2001:2009)
+pred.by.year.nodist <- data.frame(matrix(NA,nrow=1369, ncol = 0))
+for (t in years){
+  t_plus_1 <- t + 1
+  pred <- predict(fit.model.nodist[names(fit.model.nodist)==paste0("model.nodist",t)], total[total$year==t_plus_1,])
+  pred <- as.data.frame(pred)
+  rownames(pred) <- c()
+  pred.by.year.nodist <- cbind(pred.by.year.nodist, pred)
+}
+#change column names to match with total
+names(pred.by.year.nodist) <- 2002:2010
+# wide to long
+pred.by.year.nodist <- gather(pred.by.year.nodist,key = year,value = predictions,1:9)
+# drop 2000 and select variables form total
+total.no2000_1 <- total %>% 
+  filter(year!=2000 & year!=2001) %>% 
+  dplyr::select(id, year, io)
+# column bind prediction and data  
+pred.by.year.nodist <- cbind(pred.by.year.nodist, total.no2000_1)
+# pred.by.year to list by year
+pred.by.year.nodist.list <- split(pred.by.year.nodist, pred.by.year.nodist$year)
+# calculate metrics for every year
+rf.year.nodist.metrics <- lapply(pred.by.year.nodist.list, function(x) postResample(pred = x$predictions,
+                                                                              obs = x$io))
+rf.year.nodist.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
+
+# there are 2 columns named year, so I drop one
+pred.by.year.nodist$year <- NULL
+
+ggplot(data = pred.by.year.nodist,aes(x = io, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
+```
+
+## Model with `caret()`: train on year t and t + 1 with CV, report accuracy, test on t + 2 (unseen data)
+### no hl
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+## Train on t
+
+# split the data by year into a list
+#by.year <- split(total, total$year)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   savePredictions = 'final')
+
+# run the model for every 2 years
+years <- 2000:2010
+
+for (t in years){
+  tplus1 <- t + 1
+  set.seed(71)
+  model.nohl <- train(io ~ dist + emp_thousands.orig + emp_thousands.dest + 
+                          + pop_density.orig + pop_density.dest, # hl 
+                        data = total[total$year==t | total$year==tplus1,],
+                        trControl = tc,
+                        method = "rf", importance = TRUE)
+  #paste("model", t + 1, t + 2, sep="_")
+  assign(paste0("model.nohl",as.character(t + 1)), model.nohl)
+}
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# create a list of the above model outputs
+fit.model.nohl <- mget(ls(pattern = "^model.nohl20"))
+
+# resamples
+fit.model.nohl.res <- resamples(fit.model.nohl)
+summary(fit.model.nohl.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.nohl.res, scales=scales)
+
+# plot variable importance
+
+# TODO: fix the year labels
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+#lapply(fit.year, function(x) plot(varImp(x), main = names(x)))
+lapply(names(fit.model.nohl), function(x) plot(varImp(fit.model.nohl[[x]]), main=as.character(x)))
+```
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+# for a reference point
+total %>% group_by(year) %>%
+  summarise(min = min(io), max=max(io),
+            mean = mean(io), median = median(io)) %>%
+  round(2) %>% kable()
+
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainined in year t to predict io of year t + 1
+years <- (2001:2009)
+pred.by.year.nohl <- data.frame(matrix(NA,nrow=1369, ncol = 0))
+for (t in years){
+  t_plus_1 <- t + 1
+  pred <- predict(fit.model.nohl[names(fit.model.nohl)==paste0("model.nohl",t)], total[total$year==t_plus_1,])
+  pred <- as.data.frame(pred)
+  rownames(pred) <- c()
+  pred.by.year.nohl <- cbind(pred.by.year.nohl, pred)
+}
+#change column names to match with total
+names(pred.by.year.nohl) <- 2002:2010
+# wide to long
+pred.by.year.nohl <- gather(pred.by.year.nohl,key = year,value = predictions,1:9)
+# drop 2000 and select variables form total
+total.no2000_1 <- total %>% 
+  filter(year!=2000 & year!=2001) %>% 
+  dplyr::select(id, year, io)
+# column bind prediction and data  
+pred.by.year.nohl <- cbind(pred.by.year.nohl, total.no2000_1)
+# pred.by.year to list by year
+pred.by.year.nohl.list <- split(pred.by.year.nohl, pred.by.year.nohl$year)
+# calculate metrics for every year
+rf.year.nohl.metrics <- lapply(pred.by.year.nohl.list, function(x) postResample(pred = x$predictions,
+                                                                                    obs = x$io))
+rf.year.nohl.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
+
+# there are 2 columns named year, so I drop one
+pred.by.year.nohl$year <- NULL
+
+ggplot(data = pred.by.year.nohl,aes(x = io, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
+```
+
+```{r, echo=FALSE, results= 'hide', message=FALSE}
+stopCluster(cl)
+out.path <- paste(path, "/data_inter/test_t2.RData", sep = "")
+save(list=ls(),file=out.path)
+```
