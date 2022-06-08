@@ -1,0 +1,620 @@
+---
+title: 'Material and immaterial regional interdependencies: using the web to predict regional trade flows'
+# date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+author: |
+  |
+  | Emmanouil Tranos, Andre Carrascal Incera & George Willis
+  |
+  | <small>University of Bristol, Alan Turing Institute</small>
+  | <small>e.tranos@bristol.ac.uk, [\@EmmanouilTranos](https://twitter.com/EmmanouilTranos), [etranos.info](https://etranos.info/)</small>
+output: 
+  revealjs::revealjs_presentation:
+    theme: simple
+    self_contained: true
+bibliography: ../bibliography.bib
+biblio-style: "apalike"
+css: style.css
+---
+
+```{r, echo=FALSE, results=FALSE, include=FALSE}
+library(knitr)
+library(randomForest)
+library(data.table)
+library(stplanr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readxl)
+library(httr)
+library(tidyverse)
+library(rgdal)
+library(geosphere)
+library(raster)
+library(corrplot)
+library(gridExtra)
+library(ggrepel)
+library(igraph)
+library(leaflet)
+library(caret)
+library(DataExplorer)
+library(skimr)
+library(rprojroot)
+#library(htmltools)
+library(knitr)
+library(kableExtra)
+library(DescTools)
+library(rprojroot)
+library(doParallel)
+library(tidyverse)
+library(patchwork)
+```
+
+## Contents
+- Introduction
+- Empirical strategy
+- Descriptive statistics
+- Results
+- Conclusions
+
+# Introduction
+
+## Regional trade flow
+- Regions are more specialised and open than countries
+- Important external trade dependences (Thissen et al. 2016)
+- Regions vary in terms of their specialisation patterns and, therefore, in their trade relationships and openness
+
+## Regional trade flow
+- Knowing and predicting regional trade then helps to understand:
+    - regional economic performance
+    - exposure to external shocks
+    - place-based development
+- Employment vulnerability and  transmission of internal and external shocks is different for different regions.
+- Workers in regions in the US with a specialisation in specific manufacturing industries were more vulnerable for the emergence of China (Autor et al. 2013)
+
+## Regional trade flow: hardly any data
+- *Big caveat*: interregional trade data
+- Europe: spatially disaggregated IO for NUTS2 regions (Thissen et al., 2018)
+- Coslty, difficult exercise
+
+## Our contribution
+- Utilise the digital traces that interregional trade leave behind
+- Model and predict interregional trade flows for the UK
+- Scrape **open** web data
+- **Hyperlinks** between commercial websites
+- Machine learning techniques for *out-of-sample* predictions
+- Hypothesis: such hyperlinks reflect business and trade relations
+
+# Web data and spatial research
+
+## Web data and businesses
+- Businesses may not expose all of their strategies on their websites, but neither do they do during surveys (Arora et al. 2013)
+- Business websites:
+    - spreading information
+    - establishing a public image
+    - supporting online transactions
+    - sharing opinions
+
+## Spatial studies using hyperlinks
+- Hyperlinks tend to follow national borders and gravitate towards the US [@halavais2000national]
+- @kessler2017extracting used the hyperlinks between German Wikipedia webpages to represent the hierarchy of urban centres in Germany
+- @salvini2016spatialization used a the English Wikipedia to build a graph of world cities
+- Hyperlinks between and to administrative websites to study spatial relationships and structure [@holmberg2009local; @holmberg2010co; @janc2015geography]
+
+## Spatial studies using hyperlinks
+<!-- Blogs -->
+- @lin2007blog used webblog hyperlinks to analyse the spatial reflections of the blogsphere
+- @jones2010blog focused on the New York City theatre scene to investigate the existence and role of a 'virtual buzz'
+
+## Business studies using hyperlinks
+<!-- Business -->
+- Hyperlinks to business websites reflect business motivations and contain useful business information [@vaughan2006hyperlinks]
+- Significant correlations between the number of incoming links and business performance [@vaughan2004exploring; @vaughan2004links]
+- @kruger2020digital used hyperlinks between business websites in Germany to test the role of different proximity frameworks
+- Ιnnovative businesses share more hyperlinks with other business, which also tend to be innovative
+
+# Data science: new wine in old bottles?
+
+## Spatial interaction predictions
+- Plenty of ML applications predicting **out-of-sample** flows:
+    - @robinson2018machine used XGBoost and Artificial Neural Network models to predict global migration
+    - @tribby2017analyzing used RF to select variables associated with walking route choice models
+    - @guns2014recommending use RF to predict and recommend high-potential research collaborations, which have not yet been materialised
+
+## Spatial interaction predictions
+- Current economic thinking advocates towards the use of ML algorithm such as Random Forest
+- They tend to outperform ordinary least squares in **out-of-sample** predictions even when using moderate size training datasets and limited number of predictors [@mullainathan2017machine; @athey2019machine].
+
+# Empirical strategy
+
+## Web data: The Internet Archive
+- The largest archive of webpages in the world
+- 273 billion webpages from over 361 million websites, 15 petabytes of storage (1996 -)
+- A web crawler starts with a list of URLs (a seed list) to crawl and downloads a copy of their content
+- Using the hyperlinks included in the crawled URLs, new URLs are identified and crawled (snowball sampling)
+- Time-stamp
+
+## Web data: The Internet Archive
+![](C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/figure/Picture1.png){width=75%}
+
+## Web data: The Internet Archive
+![](C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/figure/Picture2.png){width=80%}
+
+<!-- ## How much of the web is archived? -->
+<!-- - Ainsworth et al. (2013) estimated that between 35% and 90% of the web is archived  -->
+<!-- - At least one page stored for 92% of the US commercial websites, but only 58% of the Chinese commercial websites (Thelwall & Vaughan 2004) -->
+<!-- - Only 24% of the trip advisor London related pages were archived. Depth issue not coverage (Scott et al 2016). -->
+<!-- - Bias towards popular web sites -->
+<!-- - Exclusion policies (robots.txt) -->
+<!-- - The Internet Archive, the *most complete* web archive in the world (Holzmannet al., 2016; Ainsworth et al., 2011) -->
+
+## Our web data
+- JISC UK Web Domain Dataset: all archived webpages from the .uk domain 1996-2010
+- Curated by the British Library
+- Tranos, E., and C. Stich. 2020. Individual internet usage and the availability of online content of local interest: A multilevel approach. *Computers, Environment and Urban Systems* 79:101371
+- Tranos, E., T. Kitsos, and R. Ortega-Argilés, R. 2020 Digital economy in the UK: Regional productivity effects of early adoption. *Forthcoming*
+
+## Our web data
+1. Geoindex: a subset of the .uk archived webpages which contain a UK postcode
+    - circa 0.5 billion URLs with valid UK postcodes
+    - 20080509162138/http://www.example_website_1.co.uk/contact_us IG8 8HD
+
+2. Hyperlinks
+    - http://www.example_website_1.co.uk | http://www.example_website_2.co.uk | 3
+    - much larger pool, only part is geolocated
+
+## Modelling strategy
+$$trade_{ijt} = hyperlinks_{ijt} + distance_{ij} + \\
+pop.density_{it} + pop.density_{it} + empl_{it} + empl_{jt} + e_{ijt}$$
+
+- Avoid overfit
+- Predict inter-regional trade flows using Random Forests (RF)
+- Widely used both for regression and classification problems [@biau2012analysis]
+- Can handle skewed distributions and outliers
+- Effectively model non-linear relationships
+- Small number of hyperparameters that need to be tuned, low sensitivity
+- Short training time [@Caruana2008; @liaw2002classification; @yan2020using]
+
+## Modelling strategy: Random Forests
+- RF is a tree-based ensemble learning method [@breiman2001random]
+- Creates random samples of the training data, which are then used to grow an equivalent number of regression trees to predict the dependent variable
+- Decision trees are trained in parallel on their own sample of the training data created with bootstrapping
+- To make a prediction for regression problems, RF average the predictions of all decision trees
+
+## Modelling strategy: *rolling forecasting*
+- Train RF models on data from years $t$ and $t + 1$ to increase the size of the training dataset
+- 10-fold cross validation
+- Predict **unseen** data from year $t + 2$
+- No data pooling to maintain their temporal structure both for methodological and conceptual reasons.
+- No data leakage
+
+## Modelling strategy: predictive performance
+
+\begin{align}
+R^2 = 1 - \frac{\sum_{k} (y_{k} - \hat{y_{k}})^2} {\sum_{k} (y_{k} - \overline{y_{k}})^2} \label{eq:rsquared}
+\end{align}
+
+\begin{align}
+MAE = \frac{1}{N} \sum_{k = 1}^{N} |\hat{y_{k}} - y_{k}| \label{eq:mae}
+\end{align}
+
+\begin{align}
+RMSE =  \sqrt{\frac{\sum_{k = 1}^{N} (\hat{y_{k}} - y_{k})^2} {N}} \label{eq:rmse}
+\end{align}
+
+- Larger errors carry more weight for $RMSE$
+
+## Data cleaning
+- All the archived .uk webpages
+- Archived during 2000-2010
+- Commercial webpages (.co.uk)
+- From webpages to websites: http://www.website1.co.uk/webpage1 and  http://www.website1.co.uk/webpage2 are part of the http://www.website1.co.uk
+- 1 *vs.* multuple postcodes in a website
+
+## Unique postcodes frequencies, 2000
+
+```{r eval=TRUE, echo=FALSE, results='asis'}
+
+# load 2000 co.uk
+# setwd("C:/Users/TranosE/DataShare/archive/nuts")
+path.2000 <- "C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/all2000couk.csv"
+
+all2000.duplicates <- fread(path.2000) #
+# dim(all2000.duplicates) # 3336162
+# it includes duplicated URLs: if one webpages includes multiple postcodes
+# then it appears multiple times. This is ok for the nuts aggregation, but
+# not for the frequencies
+# This is only .co.uk
+
+# one line for every host
+all2000 <- unique(all2000.duplicates, by = c("host")) # 57897
+
+# unique postcodes per website f table
+f.websites.pc <- Freq(all2000$V1, breaks = c(0, 1,2, 10,100,1000,10000,100000), ord = "desc")
+f.websites.pc$level <- factor(f.websites.pc$level, levels = c("[0,1]","(1,2]", "(2,10]", "(10,100]",
+                                                              "(100,1e+03]", "(1e+03,1e+04]",
+                                                              "(1e+04,1e+05]"))
+levels(f.websites.pc$level) <- c("(0,1]","(1,2]", "(2,10]", "(10,100]", "(100,1000]", "(1000,10000]", "(10000,100000]")
+kable(f.websites.pc,
+      format = "html",
+      digits = 3)
+```
+
+
+- Websites with a large number of postcodes: e.g. directories, real estate websites
+- Websites with a unique location $\Leftarrow$ *The focus of analysis for now*
+
+## Directory website with a lot of postcodes
+![](C:/Users/nw19521/DataShare/shoreditch (Christoph Stich)/paper/images_screenshots/screenshot_directory_website_2010.png)
+
+## Website with a unique postcode in London
+![](C:/Users/nw19521/DataShare/shoreditch (Christoph Stich)/paper/images_screenshots/screenshot_2010.png)
+
+# Desctiptive statistics
+
+## Interregional trade flows
+
+```{r echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+
+# This is the project path
+path <- find_rstudio_root_file()
+
+# load the data created by Data_Spatial.Rmd and ts_clusters.Rmd
+total.path <- paste(path, "/data_inter/total.csv", sep = "")
+
+total <- read.csv(total.path)
+#total <- read.csv("./data_inter/total_noself.csv")
+
+total$X <- NULL
+
+```
+
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+for.plot <- total
+for.plot$outlier.io <- ifelse(for.plot$io>50000 & for.plot$year==2010, as.character(for.plot$id), "") #outlier
+
+# change between all hyperlinks and the ones without the self-links
+#for.plot$outlier.hl <- ifelse(for.plot$hl>50000000 & (for.plot$year==2010 | for.plot$year==2004),
+#for.plot$outlier.hl <- ifelse(for.plot$hl>15000000 & (for.plot$year==2010 | for.plot$year==2004),
+for.plot$outlier.hl <- ifelse(for.plot$hl>100000 & (for.plot$year==2003 | for.plot$year==2006 | for.plot$year==2008 | for.plot$year==2009),
+as.character(for.plot$id), "") #outlier
+
+tspag.io =
+  ggplot(for.plot, aes(x=year, y=io, group = id, colour = id)) +
+  geom_line() + guides(colour=FALSE) + xlab("Year") +
+  ylab("IO") +
+  geom_text_repel(aes(label=outlier.io), cex = 4) + #this line is from the previous version
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 1))
+plot(tspag.io)
+```
+
+## Interregional hyperlinks
+
+```{r echo=FALSE, results= 'asis', message=FALSE, warning=FALSE}
+tspag.hl =
+  ggplot(for.plot, aes(x=year, y=hl, group = id, colour = id)) +
+  geom_line() + guides(colour=FALSE) + xlab("Year") +
+  ylab("Hyperlinks") +
+  geom_text_repel(aes(label=outlier.hl), cex = 4) + #this line is from the previous version
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 1))
+plot(tspag.hl)
+```
+
+## Scatter plots of trade vs. hyperlinks
+
+```{r include=TRUE, echo=FALSE, results= 'markup', message=FALSE, warning = FALSE}
+#, fig.height=15, fig.width=10}
+
+y <- as.integer(2000:2010)
+
+for(i in y){
+  plot <- ggplot(data = total[total[,1]==i,],
+       aes(x     = hl,
+           y     = io)) +
+    geom_point(size     = 1.2,
+             alpha    = .8) +
+    theme_minimal() +
+    scale_color_gradientn(colours = rainbow(100)) +
+    geom_smooth(method = "lm",
+                aes(),
+                se     = FALSE,
+                size   = .4,
+                alpha  = .6) + # to add regression line
+    labs(title  = i) +
+    xlab("hyperlinks") +
+    ylab("trade")
+  sc <- paste("sc",i, sep = "")
+  assign(sc, plot) # assign object (x) to a name (model.name)
+}
+
+grid.arrange(
+  sc2000, sc2003,
+  sc2006, sc2010,
+  #layout_matrix = rbind(c(1,2),c(3,4),c(5,6), c(7,8),c(9,10), c(11, 12)),
+  top = "Trade vs. hl")
+
+# grid.arrange(
+#   sc2000, sc2001, sc2002,
+#   sc2003, sc2004, sc2005,
+#   sc2006, sc2007, sc2008,
+#   sc2009, sc2010,
+#   #layout_matrix = rbind(c(1,2),c(3,4),c(5,6), c(7,8),c(9,10), c(11, 12)),
+#   top = "IO vs. hl")
+
+
+# The first panel of yearly plots includes all the data.
+# While the fit is not very good in the beginning of the study period, it looks very good towards the end.
+# Because there are a few outliers, the second panel excludes these outliers and the good fit is more obvious.
+```
+
+## Correlations with interregional trade
+
+```{r eval=FALSE, echo=FALSE, results= 'markup', message=FALSE, warning = FALSE}
+#, , fig.height=10, fig.width=10}
+cor.mat <- subset(total, select = c(id, year, io, hl))
+cor.mat <- reshape(cor.mat, direction = "wide", idvar = "id", timevar = "year")
+dist <- total %>%
+  dplyr::select(id, dist)
+cor.mat <- merge(cor.mat, dist, by = "id", all.x = T)
+cor.mat <- cor.mat %>%
+  dplyr::select(id, io.2000, io.2001, io.2002, io.2003, io.2004, io.2005, io.2006, io.2007, io.2008, io.2009, io.2010,
+                   hl.2000, hl.2001, hl.2002, hl.2003, hl.2004, hl.2005, hl.2006, hl.2007, hl.2008,hl.2009, hl.2010, dist) %>%
+  distinct()
+
+# # correlation between IO and hyperlinks
+# cor.io.hl <- total %>%
+#   group_by(year) %>%
+#   summarize(COR_io_hl=cor(io,hl))
+# kable(cor.io.hl)
+#
+# # correlation between IO and dist
+# cor.io.dist <- total %>%
+#   group_by(year) %>%
+#   summarize(COR_io_dist=cor(io,dist))
+# kable(cor.io.dist)
+
+# Correlogram
+cor.mat <- cor(cor.mat[,-1])
+corrplot(cor.mat, type="upper",method = "number", number.cex = .5, tl.cex = .75)
+```
+
+```{r echo=FALSE, results= 'markup', message=FALSE, warning = FALSE}
+# correlation between IO and hyperlinks
+total %>%
+ group_by(year) %>%
+ summarize(hyperlinks=cor(io,hl),
+           distance=cor(io,dist)) %>%
+ kable(format = "html",
+      digits = 3)
+```
+
+# Results
+
+## Modelling strategy
+$$trade_{ijt} = hyperlinks_{ijt} + distance_{ij} + \\
+pop.density_{it} + pop.density_{it} + empl_{it} + empl_{jt} + e_{ijt}$$
+
+- Rolling forecasting
+- Train RF models on data from years $t$ and $t + 1$
+- 10-fold cross validation
+- Predict **unseen** data from year $t + 2$
+
+## Train on year t and t + 1
+
+```{r , echo=FALSE, results='hide', message=FALSE}
+#, fig.height=15, fig.width=10}
+
+# load test_t2.RData, which was created by test_ts.Rmd
+path.rdata <- paste0(path, "/data_inter/test_t2.RData")
+load(path.rdata)
+
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.all20"))
+
+# remove model.all2011
+fit.model.all$model.all2011 <- NULL
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+
+# plot RMSE
+
+# scales <- list(x=list(relation="free"), y=list(relation="free"))
+# bwplot(fit.model.all.res, scales=scales)
+
+fit.model.all.res$values %>% #extract the values
+  dplyr::select(1, ends_with("RMSE")) %>% #select the first column and all columns with a name ending with "RMSE"
+  gather(model, RMSE, -1) %>% #convert to long table
+  mutate(model = sub("~RMSE", "", model)) %>% #leave just the model names
+  mutate(model = gsub("model.all", "", model)) %>%
+  #all.metrics$year <- gsub("X", "", all.metrics$year) # couldn't put the gsub in the chain
+  ggplot()+ #call ggplot
+  geom_boxplot(aes(x = RMSE, y = model)) -> RMSE #and plot the box plot
+
+RMSE <- RMSE +
+  ylab("")
+
+# RMSE <- RMSE +
+#   scale_y_discrete(limits = c("model.all2001", "model.all2002", "model.all2003",
+#                               "model.all2004", "model.all2005", "model.all2006",
+#                               "model.all2007", "model.all2008", "model.all2009",
+#                               "model.all2010"))
+
+# plot MAE
+fit.model.all.res$values %>% #extract the values
+  dplyr::select(1, ends_with("MAE")) %>% #select the first column and all columns with a name ending with "RMSE"
+  gather(model, MAE, -1) %>% #convert to long table
+  mutate(model = sub("~MAE", "", model)) %>% #leave just the model names
+  mutate(model = gsub("model.all", "", model)) %>%
+  ggplot()+ #call ggplot
+  geom_boxplot(aes(x = MAE, y = model)) -> MAE #and plot the box plot
+
+MAE <- MAE +
+  ylab("")
+# MAE <- MAE +
+#   scale_y_discrete(limits = c("model.all2001", "model.all2002", "model.all2003",
+#                               "model.all2004", "model.all2005", "model.all2006",
+#                               "model.all2007", "model.all2008", "model.all2009",
+#                               "model.all2010"))
+
+# plot Rsquared
+fit.model.all.res$values %>% #extract the values
+  dplyr::select(1, ends_with("Rsquared")) %>% #select the first column and all columns with a name ending with "RMSE"
+  gather(model, Rsquared, -1) %>% #convert to long table
+  mutate(model = sub("~Rsquared", "", model)) %>% #leave just the model names
+  mutate(model = gsub("model.all", "", model)) %>%
+  ggplot()+ #call ggplot
+  geom_boxplot(aes(x = Rsquared, y = model)) -> Rsquared #and plot the box plot
+
+Rsquared <- Rsquared +
+  ylab("Year")
+# Rsquared <- Rsquared +
+#   scale_y_discrete(limits = c("model.all2001", "model.all2002", "model.all2003",
+#                               "model.all2004", "model.all2005", "model.all2006",
+#                               "model.all2007", "model.all2008", "model.all2009",
+#                               "model.all2010"))
+
+grid.arrange(
+  Rsquared, MAE, RMSE,
+  nrow = 1, ncol = 3,
+  top = "Accuracy metrics")
+```
+
+```{r eval=FALSE, results= 'markup', message=FALSE}
+summary(fit.model.all.res)
+```
+
+## Feature importance
+
+```{r echo=FALSE, results= 'hide', message=FALSE}
+importance <- lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+
+marrangeGrob(c(importance[1], importance[4],
+               importance[8], importance[10]),
+             nrow=2, ncol=2, top = "")
+```
+
+## Test on t + 2
+
+```{r echo=FALSE, results= 'markup', message=FALSE}
+
+all.metrics <- rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  rownames_to_column("metric") %>%
+  pivot_longer(-metric, names_to = "year", values_to="value") %>%
+  pivot_wider(names_from = "metric", values_from = "value") %>%
+  mutate(year = gsub("X", "", year))
+
+all.metrics %>% kable(format = "html",
+      digits = 3,
+      position = "left")
+
+```
+
+## Test on t + 2
+
+```{r echo=FALSE, results= 'markup', message=FALSE}
+# there are 2 columns named year, so I drop one
+# pred.by.year.all$year <- NULL
+
+ggplot(data = pred.by.year.all,aes(x = io, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. observed interregional trade by year") +
+  ylab("Predicted") + xlab("Observed")
+
+```
+
+## Alternative models: hyperlinks no better than distance
+
+```{r echo=FALSE, results= 'markup', message=FALSE}
+
+# no distance
+nodist.metrics <- rf.year.nodist.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  rownames_to_column("metric") %>%
+  pivot_longer(-metric, names_to = "year", values_to="value") %>%
+  pivot_wider(names_from = "metric", values_from = "value") %>%
+  mutate(year = gsub("X", "", year)) %>%
+  mutate(model = "no distance")
+
+# no hl
+nohl.metrics <- rf.year.nohl.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  rownames_to_column("metric") %>%
+  pivot_longer(-metric, names_to = "year", values_to="value") %>%
+  pivot_wider(names_from = "metric", values_from = "value") %>%
+  mutate(year = gsub("X", "", year)) %>%
+  mutate(model = "no hyperlinks")
+
+# merge, create 3 plots
+all.metrics$model <- "all variables"
+
+all <- rbind(all.metrics, nodist.metrics, nohl.metrics)
+
+rmse.plot <- ggplot(all) +
+  aes(x = as.numeric(year), y = RMSE, color = model) +
+  geom_line(size = 1) + labs(x = "year") + theme_minimal()
+
+rsquared.plot <- ggplot(all) +
+  aes(x = as.numeric(year), y = Rsquared, color = model) +
+  geom_line(size = 1) + labs(x = "year") + theme_minimal()
+
+mae.plot <- ggplot(all) +
+  aes(x = as.numeric(year), y = MAE, color = model) +
+  geom_line(size = 1) + labs(x = "year") + theme_minimal()
+
+rmse.plot + rsquared.plot / mae.plot
+```
+
+```{r eval=FALSE, echo=FALSE, results= 'markup', message=FALSE}
+# plotting errors vs. distance
+
+error.all <- merge(pred.by.year.all, total, by=c("id", "year"), all.x=TRUE)
+error.all <- error.all %>%
+  rename(io = io.x) %>%
+  dplyr::select(-io.y) %>%
+  mutate(error = predictions - io)
+
+ggplot(error.all) +
+  aes(x = dist, y = error) +
+  geom_point()
+
+error.nodist <- merge(pred.by.year.nodist, total, by=c("id", "year"), all.x=TRUE)
+error.nodist <- error.nodist %>%
+  rename(io = io.x) %>%
+  dplyr::select(-io.y) %>%
+  mutate(error = predictions - io)
+
+ggplot(error.nodist) +
+  aes(x = dist, y = error) +
+  geom_point()
+
+error.nohl <- merge(pred.by.year.nohl, total, by=c("id", "year"), all.x=TRUE)
+error.nohl <- error.nohl %>%
+  rename(io = io.x) %>%
+  dplyr::select(-io.y) %>%
+  mutate(error = predictions - io)
+
+ggplot(error.nohl) +
+  aes(x = dist, y = error) +
+  geom_point()
+
+```
+
+## Conclusions
+
+- Interregional trade is difficult to capture
+- Current state-of-the art: distance decay
+- Interregional trade leaves digital paper trail
+- Prediction framework
+- Spatially and industrially disaggregated approaches
+- Opportunity for local authorities to estimate their export base / specialisations
+- Next steps: sectoral trade
+
+## References {.allowframebreaks}

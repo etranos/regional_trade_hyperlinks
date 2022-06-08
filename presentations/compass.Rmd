@@ -1,0 +1,265 @@
+---
+title: 'Using the web to detect and predict spatial relationships'
+# date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+author: |
+  |
+  | Emmanouil Tranos
+  |
+  | <small>University of Bristol, School of Geographical Sciences; Alan Turing Institute</small>
+  | <small>[etranos.info](https://etranos.info/), [\@EmmanouilTranos](https://twitter.com/EmmanouilTranos), e.tranos@bristol.ac.uk</small>
+output:
+  revealjs::revealjs_presentation:
+    theme: simple
+    self_contained: true
+bibliography: ../bibliography.bib
+biblio-style: "apalike"
+css: style.css
+---
+
+```{r, echo=FALSE, results=FALSE, include=FALSE}
+library(knitr)
+library(randomForest)
+library(data.table)
+library(stplanr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(readxl)
+library(httr)
+library(tidyverse)
+library(rgdal)
+library(geosphere)
+library(raster)
+library(corrplot)
+library(gridExtra)
+library(ggrepel)
+library(igraph)
+library(leaflet)
+library(caret)
+library(DataExplorer)
+library(skimr)
+library(rprojroot)
+#library(htmltools)
+library(knitr)
+library(kableExtra)
+library(DescTools)
+library(rprojroot)
+library(doParallel)
+library(tidyverse)
+library(patchwork)
+```
+
+## Main idea
+- Limited capacity to observe **spatial relationships**
+- *Tangible*:
+  - Movements of individuals
+  - Vehicle or passenger flows
+- A lot of work lately (transport and mobility big data)
+- Various challenges regarding scale, velocity etc.
+
+## Main idea
+- *Intangible*:
+  - Trade between regions
+  - Business relationships
+  - Knowledge flows
+  - Historical ties
+  - Social ties
+- Difficult to capture (surveys)
+- **Important** for policy designing (e.g. transport infrastructure)
+
+## Main idea  
+- Use the web to identify spatial relationships
+- *Dependencies* between cities and regions
+- Web text:
+  - To detect and predict such relationships
+  - Various spatial and temporal scales
+  - *Contextualise* these relationships
+
+# Why use the web?
+
+## Web data and business studies
+- Businesses may not expose all of their strategies on their websites, but neither do they do during surveys [@arora2013entry]
+- Business websites:
+    - spreading information
+    - establishing a public image
+    - supporting online transactions
+    - sharing opinions
+
+## Business studies using hyperlinks
+<!-- Business -->
+- Hyperlinks to business websites reflect business motivations and contain useful business information [@vaughan2006hyperlinks]
+- Significant correlations between the number of incoming links and business performance [@vaughan2004exploring; @vaughan2004links]
+- @kruger2020digital used hyperlinks between business websites in Germany to test the role of different proximity frameworks
+- Innovative businesses share more hyperlinks with other business, which also tend to be innovative
+
+## Spatial studies using hyperlinks
+- Hyperlinks tend to follow national borders and gravitate towards the US [@halavais2000national]
+- @kessler2017extracting used the hyperlinks between German Wikipedia webpages to represent the hierarchy of urban centres in Germany
+- @salvini2016spatialization used a the English Wikipedia to build a graph of world cities
+- Hyperlinks between and to administrative websites to study spatial relationships and structure [@holmberg2009local; @holmberg2010co; @janc2015geography]
+
+## Spatial studies using hyperlinks
+<!-- Blogs -->
+- @lin2007blog used webblog hyperlinks to analyse the spatial reflections of the blogsphere
+- @jones2010blog focused on the New York City theatre scene to investigate the existence and role of a 'virtual buzz'
+
+# Our current work
+
+---
+
+- JISC UK Web Domain Dataset: .uk webpages in the Internet Archive 1996-2010
+- @tranos2020individual
+- @tranos2020digital
+- @tranos2020hyperlinks
+
+---
+
+```{r , echo=FALSE, results='hide', message=FALSE}
+#, fig.height=15, fig.width=10}
+
+# This is the project path
+path <- find_rstudio_root_file()
+
+# load test_t2.RData, which was created by test_ts.Rmd
+path.rdata <- paste0(path, "/data_inter/test_t2.RData")
+load(path.rdata)
+
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.all20"))
+
+# remove model.all2011
+fit.model.all$model.all2011 <- NULL
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+
+# plot RMSE
+
+# scales <- list(x=list(relation="free"), y=list(relation="free"))
+# bwplot(fit.model.all.res, scales=scales)
+
+fit.model.all.res$values %>% #extract the values
+  dplyr::select(1, ends_with("RMSE")) %>% #select the first column and all columns with a name ending with "RMSE"
+  gather(model, RMSE, -1) %>% #convert to long table
+  mutate(model = sub("~RMSE", "", model)) %>% #leave just the model names
+  mutate(model = gsub("model.all", "", model)) %>%
+  #all.metrics$year <- gsub("X", "", all.metrics$year) # couldn't put the gsub in the chain
+  ggplot()+ #call ggplot
+  geom_boxplot(aes(x = RMSE, y = model)) -> RMSE #and plot the box plot
+
+RMSE <- RMSE +
+  ylab("")
+
+# RMSE <- RMSE +
+#   scale_y_discrete(limits = c("model.all2001", "model.all2002", "model.all2003",
+#                               "model.all2004", "model.all2005", "model.all2006",
+#                               "model.all2007", "model.all2008", "model.all2009",
+#                               "model.all2010"))
+
+# plot MAE
+# fit.model.all.res$values %>% #extract the values
+#   dplyr::select(1, ends_with("MAE")) %>% #select the first column and all columns with a name ending with "RMSE"
+#   gather(model, MAE, -1) %>% #convert to long table
+#   mutate(model = sub("~MAE", "", model)) %>% #leave just the model names
+#   mutate(model = gsub("model.all", "", model)) %>%
+#   ggplot()+ #call ggplot
+#   geom_boxplot(aes(x = MAE, y = model)) -> MAE #and plot the box plot
+#
+# MAE <- MAE +
+#   ylab("")
+# # MAE <- MAE +
+# #   scale_y_discrete(limits = c("model.all2001", "model.all2002", "model.all2003",
+# #                               "model.all2004", "model.all2005", "model.all2006",
+# #                               "model.all2007", "model.all2008", "model.all2009",
+# #                               "model.all2010"))
+#
+# # plot Rsquared
+# fit.model.all.res$values %>% #extract the values
+#   dplyr::select(1, ends_with("Rsquared")) %>% #select the first column and all columns with a name ending with "RMSE"
+#   gather(model, Rsquared, -1) %>% #convert to long table
+#   mutate(model = sub("~Rsquared", "", model)) %>% #leave just the model names
+#   mutate(model = gsub("model.all", "", model)) %>%
+#   ggplot()+ #call ggplot
+#   geom_boxplot(aes(x = Rsquared, y = model)) -> Rsquared #and plot the box plot
+#
+# Rsquared <- Rsquared +
+#   ylab("Year")
+# # Rsquared <- Rsquared +
+# #   scale_y_discrete(limits = c("model.all2001", "model.all2002", "model.all2003",
+# #                               "model.all2004", "model.all2005", "model.all2006",
+# #                               "model.all2007", "model.all2008", "model.all2009",
+# #                               "model.all2010"))
+#
+# grid.arrange(
+#   Rsquared, MAE, RMSE,
+#   nrow = 1, ncol = 3,
+#   top = "Accuracy metrics")
+```
+
+```{r echo=FALSE, results= 'hide', message=FALSE}
+
+all.metrics <- rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  rownames_to_column("metric") %>%
+  pivot_longer(-metric, names_to = "year", values_to="value") %>%
+  pivot_wider(names_from = "metric", values_from = "value") %>%
+  mutate(year = gsub("X", "", year))
+
+all.metrics %>% kable(format = "html",
+      digits = 3,
+      position = "left")
+
+```
+
+```{r echo=FALSE, results= 'markup', message=FALSE}
+# there are 2 columns named year, so I drop one
+# pred.by.year.all$year <- NULL
+
+ggplot(data = pred.by.year.all,aes(x = io, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. observed interregional trade by year") +
+  ylab("Predicted") + xlab("Observed")
+
+```
+
+# Gap
+- Importance of understanding spatial relationship for urban and regional policy making
+- Some work on extracting spatial relations from the web
+- Most of it is based hyperlinks between geolocated websites
+- Limited work based on toponym co-occurrences [@meijers2019using]
+- **Very limited** work on contextualisation of such relationships
+- **Hardly any work** in utilising such data to create meaningful geographic knowledge
+- Importance: inform city and regional **policies**
+
+# The new PhD project
+- ML, NLP statistical and network modelling
+- Named entity recognition (actors, organisations, events, toponym disambiguation)
+- Extract spatial relationships
+- Contextualise (NLP)
+- Multiscalar approach
+- Spatio-temporal networks
+- Need for methods incorporating space & text
+- Tools to access large web archives
+
+# The new PhD project
+- Untapped potential to utilise the web as a data source
+- Data science tools to support social science and policy making
+
+```{css echo=FALSE, message=FALSE}
+.slide {
+    height: 750px;
+    overflow-y: auto !important;
+}
+
+# it aligns all the slides
+# .reveal section {
+#         text-align: left;
+#     }
+
+```
+
+# References {.allowframebreaks}
