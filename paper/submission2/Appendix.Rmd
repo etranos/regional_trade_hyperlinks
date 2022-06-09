@@ -87,7 +87,8 @@ Mapping_df <- total %>%
 
 # I need to repeat `find_rstudio_root_file()` otherwise it turns back to .Rmd floder
 path <- find_rstudio_root_file()
-shp <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "NUTS_RG_01M_2010_4326_LEVL_2")
+shp <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "NUTS_RG_01M_2010_4326_LEVL_2",
+               verbose=FALSE)
 
 shp_UK <- subset(shp, NUTS_ID %in% Mapping_df$orig) 
 centroids <- SpatialPointsDataFrame(coordinates(shp), data = as(shp, "data.frame")[c("NUTS_ID")])
@@ -170,7 +171,8 @@ Lad_df <- lad_prediction %>%
   dplyr::select(orig, dest, id, model.all2009, hl, year, lad.orig, lad.dest)
 
 #shapefile and centroids
-shp_LA <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC")
+shp_LA <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC", 
+                  verbose=FALSE)
 shp_UK_LA <- subset(shp_LA, lad18cd %in% Mapping_df$orig)
 centroids_LA <- as.data.frame(shp_LA)[,c(2,7,8)]
 
