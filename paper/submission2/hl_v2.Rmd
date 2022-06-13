@@ -947,7 +947,7 @@ the sectors as R-squared is consistently above $0.75$. Our models perform except
 good in predicting unseen interregional trade flows regarding manufacturing and 
 construction as well as equipment.
 
-In summary, our results show a clear pattern of tradable sectors vs non-tradable sectors. 
+In summary, our results show a clear pattern of tradable sectors vs. non-tradable sectors. 
 Even though references such as @gervais2019tradability and @jensen2005 
 challenge this conventional view of goods as tradable and services as non-tradable, 
 in @gervais2019tradability for the US they find that Manufacturing products are $75%$ 
@@ -1141,7 +1141,10 @@ We briefly discuss here the predictions for two LAD: Camden in central London
 and Birmingham
 <!-- (\ref{bham}) -->
 , the second biggest city in the UK. We present the import and export trade flows 
-for these LAD in Figure \ref{LAD_Maps}. While both of these examples illustrate 
+for these LAD in Figure \ref{LAD_Maps}
+^[The online appendix provides the URL to interactive visualisations of the hypelink
+flows at the NUTS2 level and the trade flow predictions for LADs]. 
+While both of these examples illustrate 
 the importance of distance in trade flows -- light colour lines are concentrated 
 near Camden and Birmingham -- Camden appears to have more light colour links not 
 only with adjacent LAD, but also with more distant ones both in terms of imports 

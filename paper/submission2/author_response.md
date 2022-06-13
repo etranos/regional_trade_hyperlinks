@@ -1,13 +1,19 @@
+---
+output:
+  pdf_document: default
+---
+
 ## Editor comments
 
 **I have now received all reviews for your paper. Based on the comments, I ask that you undertake Moderate Revisions and resubmit the revised manuscript (via Manuscript Central) for further consideration. Comments from reviewers are pasted to the end of this letter. I would like to echo the suggestions made by Reviewer #1, #2, and #4 that in the revision, please clarify and sharpen the key contribution of the work as random forest is already a 'bread and butter' method (as put by reviewer #4).**
 
-Thank you for offering the opportunity to revise and resubmit our work. In this revised version of the manuscript, we have amended the analysis and text to address the very useful referee comments we received. We made sure to clarify and sharpen the key contribution of the paper. We do indeed use an estimator which is 'bread and butter' for data science, but we believe that our research framework is novel as we utilise openly available web data to make out of sample predictions instead of estimating a traditional, explanatory, parametric model. Importantly, these predictions are useful for both for researchers and policy makers as there are very limited data regarding regional trade flows and hardly any for more granular aerial units. The current version of the paper also offers an online appendix which visualise these disaggregated predictions.
+Thank you for offering the opportunity to revise and resubmit our paper. In this revised version of the manuscript, we have amended the analysis and text to address the very useful referee comments. We made sure to clarify and sharpen the key contribution of the paper. We do indeed use an estimator which is 'bread and butter' for data science, but we believe that our research framework is novel as we utilise openly available web data to make *out of sample predictions* instead of estimating a traditional, explanatory, parametric model. Importantly, these predictions are useful for both for researchers and policy makers as there are very limited data regarding regional trade flows and hardly any for more granular aerial units. The current version of the paper also offers an online appendix which visualise these disaggregated predictions.
 
 Below we provide detailed answers to the specific comments.
 
-
 ---
+
+\newpage
 
 ## Reviewer: 1
 
@@ -25,7 +31,7 @@ Thank you for recognising our data cleaning and aggregation processes.
 
 **However, from scientific perspective, aggregation of webpages for this domain is comparatively new but not quite innovative (as review in Page 4 of this manuscript).**
 
-Yes, we are not claiming that we are the first ones utilising web data to answer social science research question. As you noted we reviewed the literature which utilised similar data. But we still think that our approach is novel as never before archived web data have been employed in that context and extend. Hence, we added the following sentence in Section 4, p. **TOADD**:
+Yes, we are not claiming that we are the first ones utilising web data to answer social science research question. As you noted we reviewed the literature which utilised similar data. But we still think that our approach is novel as never before archived web data have been employed in that context and extend. Hence, we added the following sentence in Section 4, p. 9:
 
 > However, to our knowledge this is the first time that such extended, but also granular
 > in terms of space and time, archived web data has been utilised to model interregional
@@ -55,7 +61,7 @@ and the Conclusions:
 
 **New finding? When dataset used in this study was 2000-2010, the drop in 2010 due to the financial crisis for almost all sectors (not only the service sector mentioned in the manuscript) as shown in Figure 4 cannot be further discussed in details on the performance of the proposed method, such as the model performance consistency before and after the crisis. It's a pity. Such a current limit also makes the end statement of this manuscript (potentials related to "recent COVID-19 crisis", and "help us to anticipate local exposures and knock-on effects to shocks") to be much less supported. Note that this topic may also have been explored under the COVID-19 pandemic event. If authors may further add discussion on this point, it should be considered to relate the discussion with that.**
 
-We agree that the period of the database limits the conclusions about the method during crises, at the end we are training the model with past data, but the statement about the usefulness of the results obtained is made regarding the utility of the predicted interregional trade flows and the granularity of these predictions. In other words, the proposed research framework allows to obtain predictions in order to track the propagation processes linked with positive or negative economic shocks. Intra and interregional trade data are very scarce (even scarcer or inexistent at the local authority/municipal level) and having a research framework that provides some insights is better than trying to develop a simulation model to understand and estimate the regional economic exposure with just national survey data obtained every 5 years. Economic exposure analyses to negative shocks (such as the Covid-19 or the financial crisis) need to be done through simulations using data just before the arrival of a crisis, which is not the same as predicting the trade flows in a crisis year. The Covid-19 reference in the conclusions is not related to the potential capabilities of the method proposed but to put into consideration the necessity to highlight the importance of "identifying external dependencies and vulnerabilities to supply chain disruptions".
+We agree that the period of the database limits the conclusions about the method during crises. At the end, we are training the model with past data, but the statement about the usefulness of the results obtained is made regarding the utility of predicting interregional trade flows and the granularity of these predictions. In other words, the proposed research framework allows to obtain predictions in order to track the propagation processes linked with positive or negative economic shocks. Intra and interregional trade data are very scarce (even scarcer or nonexistent at the local authority/municipal level) and having a research framework that provides some insights is better than trying to develop a simulation model to understand and estimate the regional economic exposure with just national survey data obtained every 5 years. Economic exposure analyses to negative shocks (such as the Covid-19 or the financial crisis) need to be done through simulations using data just before the arrival of a crisis, which is not the same as predicting the trade flows in a crisis year. The Covid-19 reference in the conclusions is not related to the potential capabilities of the method proposed, but to put into consideration the necessity to highlight the importance of "identifying external dependencies and vulnerabilities to supply chain disruptions".
 
 ---
 
@@ -63,7 +69,7 @@ We agree that the period of the database limits the conclusions about the method
 
 **Section “4 Data”: Please make it clear if a web page in Geoindex includes a UK postcode string not only in this webpage (might be other unrelated information) but also in particular position for stating the location of this webpage host. Otherwise, it may likely be a misinformation for geolocating the company of the webpage.**
 
-If we understand the above comment correctly, the reviewer is asking to elaborate on the geolocation process. The raw data (Geoindex) includes the unique postcodes mentioned in each archived webpage. Our aggregation processes allows us to assess this information not at the webpage level, but instead at the website level and, therefore, we use these terms carefully in the paper. If it was the former, the reviewer would have been right to question what the inclusion of a postcode actually means in a single webpage. However, because of the aggregation process we observe websites with a range of postcodes from one unique postcode to thousands as per Table 1. Our expectation is that the postcodes included in websites with only one unique postcode represent the trading addresses of these commercial activities. We believe that this is a fair expectation as we know from the literature that commercial websites perform specific missions. See for instance the below amended text in p. **TOADD**:
+If we understand the above comment correctly, the reviewer is asking to elaborate on the geolocation process. The raw data (Geoindex) include the unique postcodes mentioned in each archived webpage. Our aggregation process allows us to assess this information not at the webpage level, but instead at the website level and, therefore, we use these terms carefully in the paper. If it was the former, the reviewer would have been right to question what the inclusion of a postcode actually means in a single webpage. However, because of the aggregation process we observe websites with a range of postcodes from one unique postcode to thousands as per Table 1. Our expectation is that the postcodes included in websites with only one unique postcode represent the trading addresses of these commercial activities. We believe that this is a fair expectation as we know from the literature that commercial websites perform specific missions. See for instance the below amended text in p. 9:
 
 > Regarding the geolocation of such commercial websites, given that their mission is to
 > support businesses (Blazquez and Domenech 2018), we expect that the self-reported
@@ -82,13 +88,13 @@ The following text is also included in Section 4, which further explains this pr
 >
 > [[5\]](#_ftn5) For example the following webpages http://www.examplewebsite.co.uk/webpage1 and http://www.examplewebsite.co.uk/webpage2 are part of the http://www.examplewebsite.co.uk/ website.
 
-We firstly analyse websites with a unique postcode included in all their archived webpages. As per Blazquez and Domenech (2018) we expect these websites to represent economic activities trading in the unique location included in the archived webpages. Then, as a robustness check we repeat our analysis for websites with up to 10 unique postcodes and the results remain at large the same. Considering all the above, we are confident that our geolocation process is meaningful and informative.
+We firstly analyse websites with one unique postcode included in all their archived webpages. As per Blazquez and Domenech (2018) we expect these websites to represent economic activities trading in the unique location included in the archived webpages. Then, as a robustness check we repeat our analysis for websites with up to 10 unique postcodes and the results remain at large the same. Considering all the above, we are confident that our geolocation process is meaningful and informative.
 
 ---
 
 **Besides those from web data, other input features for RF (i.e., employment, and population density) used in this study have not been justified on the selection. Why these two? And why not to include other potential features?**
 
-We have now added the following paragraph in the Data section in p. **TO ADD**:
+We have now added the following paragraph in the Data section in p. 11:
 
 > These control variables (employment and population density) are included following gravity-type functions that are common when estimating economic flows between two geographical points (trade, migration, commuting, etc.). Such models normally use attraction factors (as the masses of the two regions) such as gross income in the region/country (Anderson and van Wincoop, 2003; Riddington et al., 2006), or employment as a proxy when Gross Value Added (GVA) or GDP data is not available  (Kimura and Lee, 2006). Also, employment by sector is often used in the estimation process of regionalization of Input-Output models by the means of Location Quotients (Flegg and Webber, 2000). We choose employment because it is also available at a more disaggregated geographical level. Population density controls for the agglomeration of the regions complementing the employment variable in determining the economic size of the bodies (Greene, 2013). Distance works as a resistance effect. In addition, given the aim of the paper to predict interregional trade flows, we opted towards parsimony and, therefore, we tried to minimise the number of predictors.
 
@@ -100,39 +106,41 @@ As are aiming to illustrate the value of our research framework, we opted toward
 
 ---
 
-*Page 9: “78% of all archived websites included only one unique postcode” - ? 72% according to Table 1.*
+**Page 9: “78% of all archived websites included only one unique postcode” - ? 72% according to Table 1.**
 
 The typo has now been corrected.
 
 ---
 
-*Table 2: unit of row? Max of "Employment" is 2224.5 - is it reasonable for ".5" (for counting part-time employments)?*
+**Table 2: unit of row? Max of "Employment" is 2224.5 - is it reasonable for ".5" (for counting part-time employments)?**
 
-Regarding employment, it is defined in thousands, which is why we have some ".5" values. The units have now been added in Table 2.
+Regarding employment, it is expressed in thousands, which is why we have some ".5" values. The units have now been added in Table 2.
 
 ---
 
-*Page 12: “obtain errors from 32.9 to 38.5 using traditional regionalisation method” - unit for the error? Some other places with the similar question.*
+**Page 12: “obtain errors from 32.9 to 38.5 using traditional regionalisation method” - unit for the error? Some other places with the similar question.**
 
-We have now added to following text in the results section (p. **TO ADD**) to clarify this point:
+We have now added to following text in the results section (p. 13) to clarify this point:
 
 > These errors are measured as Weighted Absolute Percentage Errors (WAPEs). WAPEs express the absolute deviation in relation to the true value of each Input-Output coefficient. In other words, they report average error in percentage terms (Lamonica and Chelli, 2018; Pereira et al., 2020). In that sense, the R-squared is a comparable measure.
 
 ---
 
-*Figure 5: the x-axis is too crowded.*
+**Figure 5: the x-axis is too crowded.**
 
 Figure 5 has now been amended.
 
 ---
 
-*Some minor spelling errors: “ccLTD” in Page 9, “interregional trafde” in Page 17.*
+**Some minor spelling errors: “ccLTD” in Page 9, “interregional trafde” in Page 17.**
 
 The typos have now been corrected.
 
 ---
 
 ---
+
+\newpage
 
 ## Reviewer: 2
 
@@ -233,9 +241,9 @@ Yes, this was an omission. We have now added the following in the last paragraph
 > the other three variables we employ -- distance between the centroids of NUTS2 regions
 > in the UK, employment and population density for NUTS2 regions -- are reported in Table 2.
 
-We have also added the following text regarding the other predictors included in our model (p. **TO ADD**):
+We have also added the following text regarding the other predictors included in our model (p. 11):
 
-> These control variables (employment These control variables (employment and population density) are included following gravity-type functions that are common when estimating economic flows between two geographical points (trade, migration, commuting, etc.). Such models normally use attraction factors (as the masses of the two regions) such as gross income in the region/country (Anderson and van Wincoop, 2003; Riddington et al., 2006), or employment as a proxy when Gross Value Added (GVA) or GDP data is not available  (Kimura and Lee, 2006). Also, employment by sector is often used in the estimation process of regionalization of Input-Output models by the means of Location Quotients (Flegg and Webber, 2000). We choose employment because it is also available at a more disaggregated geographical level. Population density controls for the agglomeration of the regions complementing the employment variable in determining the economic size of the bodies (Greene, 2013). Distance works as a resistance effect. In addition, given the aim of the paper to predict interregional trade flows, we opted towards parsimony and, therefore, we tried to minimise the number of predictors.
+> These control variables (employment and population density) are included following gravity-type functions that are common when estimating economic flows between two geographical points (trade, migration, commuting, etc.). Such models normally use attraction factors (as the masses of the two regions) such as gross income in the region/country (Anderson and van Wincoop, 2003; Riddington et al., 2006), or employment as a proxy when Gross Value Added (GVA) or GDP data is not available  (Kimura and Lee, 2006). Also, employment by sector is often used in the estimation process of regionalization of Input-Output models by the means of Location Quotients (Flegg and Webber, 2000). We choose employment because it is also available at a more disaggregated geographical level. Population density controls for the agglomeration of the regions complementing the employment variable in determining the economic size of the bodies (Greene, 2013). Distance works as a resistance effect. In addition, given the aim of the paper to predict interregional trade flows, we opted towards parsimony and, therefore, we tried to minimise the number of predictors.
 
 ---
 
@@ -251,9 +259,9 @@ The below sentence has now been added at the end of Section 4:
 
 **There is little explanation of the reduction in Rsquared in Table 3 for year 2010. Could it be due to using data from a different stage in the business cycle? This is mentioned later on in passing on the results for services.**
 
-Yes, that is exactly the point. Using previous years' information for predicting 2010 has some drawbacks reflected in the lower Rsquared observed. Just with data on distance, employment, population density and Hyperlinks of a different stage in the business cycle is complicated to accurately predict 2010, as signalled by the referee. In this case, we opted for doing our analysis with a parsimonious model that makes the interpretation of the results straightforward.
+Yes, that is exactly the point. Using previous years' information for predicting 2010 has some drawbacks reflected in the lower Rsquared observed. Just with data on distance, employment, population density and hyperlinks of a different stage in the business cycle is challenging to accurately predict 2010 trade flows, as signalled by the referee. We opted towards a parsimonious model that makes the interpretation of the results straightforward.
 
-We added the following text to provide further explanation when we report the main results in p. **TO ADD**:
+We added the following text to provide further explanation when we report the main results in p. 13:
 
 > The drop of the predictive capacity of our model for 2010 can be attributed to
 > the aftermath of the financial crisis and the use of data reflecting different business
@@ -263,17 +271,17 @@ We added the following text to provide further explanation when we report the ma
 
 **Also it would be useful to understand better the comparability between Pereira-Lopez et al (2020) & Jiang et al (2012) to this study and its accuracy metrics to support the argument that similar articles using different methods have higher error terms.**
 
-Both in Jiang et al., (2012) and in Pereira-Lopez et al., (2020) they measure the accuracy of their methods using the Weighted Absolute Percentage Errors (WAPEs). WAPEs express the absolute deviation in relation to the value of the true value of each Input-Output coefficient. In other words, it tells us the average error in percentage terms (Lamonica and Chelli, 2018; Pereira et al., 2020). We have included this in the results section in p. **ADD PAGE**, as suggested.
+Both in Jiang et al., (2012) and in Pereira-Lopez et al., (2020) they measure the accuracy of their methods using the Weighted Absolute Percentage Errors (WAPEs). WAPEs express the absolute deviation in relation to the value of the true value of each Input-Output coefficient. In other words, it tells us the average error in percentage terms (Lamonica and Chelli, 2018; Pereira et al., 2020). We have included this in the results section in p. 13, as suggested.
 
 ---
 
 **It would be useful to add some references in explaining where the accuracy metrics are lower such as the claim on tourism trade dependencies at the top of p. 14. Similarly for real estate.**
 
-Here the point is that sectors that don't have many commercial links with other sectors are going to be always more difficult to predict than those that are buying and selling their products to other sectors more often. The results show a clear pattern of tradable sectors vs non-tradable sectors. Overall, what can be seen in Figure 4 is that services that are conventionally labour-intense (s11, s12, s13, s14 and s15), and therefore they trade less intermediate inputs, show a lower Rsquared than some manufacturing sectors and construction (s6, s8 and s9 are always above the 80% Rsquared).
+Here the point is that sectors that don't have many commercial links with other sectors are going to be always more difficult to predict than those that are buying and selling their products to other sectors more often. The results show a clear pattern of tradable vs. non-tradable sectors. Overall, what can be seen in Figure 4 is that services that are conventionally labour-intense (s11, s12, s13, s14 and s15), and therefore they trade less intermediate inputs, show a lower Rsquared than some manufacturing sectors and construction (s6, s8 and s9 are always above the 80% Rsquared).
 
-Hence, we added the following paragraph in p. **ADD PAGE** which includes new references from the relevant literature to support our argument:
+Hence, we added the following paragraph in p. 15 which includes new references from the relevant literature to support our argument:
 
-> In summary, our results show a clear pattern of tradable sectors vs non-tradable sectors. Even though references such as Gervais and Jensen (2019) and Jensen and Kletzer (2005) challenge this conventional view of goods as tradable and services as non-tradable, in Gervais and Jensen (2019) analysis for the US they find that Manufacturing products are 75% tradable and 25% non-tradable (S3 to S8 sectors in our study), Recreation and Food services (the most comparable one to our Hospitality sector) is 86% non-tradable, and Real Estate and Leasing is 79% non tradable, among other results.
+> In summary, our results show a clear pattern of tradable sectors vs. non-tradable sectors. Even though references such as Gervais and Jensen (2019) and Jensen and Kletzer (2005) challenge this conventional view of goods as tradable and services as non-tradable, in Gervais and Jensen (2019) analysis for the US they find that Manufacturing products are 75% tradable and 25% non-tradable (S3 to S8 sectors in our study), Recreation and Food services (the most comparable one to our Hospitality sector) is 86% non-tradable, and Real Estate and Leasing is 79% non tradable, among other results.
 
 ---
 
@@ -293,7 +301,7 @@ We do appreciate the above given that we have to plot 15 lines for 9 time period
 
 **I find this one of the main contributions of the paper. i.e. the ability to draw trade information for places where there is none. I suggest the author(s) can make more of it by discussing it more explicitly in the introduction but also other parts of the paper.**
 
-We have now added the following paragraph in the introduction in p. **ADD PAGE**:
+We have now added the following paragraph in the introduction in p. 2:
 
 > Our proposed research framework not only allows for accurate prediction of interregional
 > trade flows, but also for disaggregating such flows at more granular spatial units
@@ -302,11 +310,14 @@ We have now added the following paragraph in the introduction in p. **ADD PAGE**
 > to supply chain disruptions. Importantly, such accurately predicted interregional
 > and granular trade flows can assist ex ante evaluations of place-based economic policies.
 
-**GW/ET create an online appendix and add a line in this section**
+In addition, we have created interactive visalusations of the hypelinks
+flows at the NUTS2 level and the trade flow predictions for LADs.
 
 ---
 
 ---
+
+\newpage
 
 ## Reviewer: 3
 
@@ -326,7 +337,7 @@ The current version of the paper now includes an estimation using LASSO and the 
 
 **Second, I found the discussion of variable selection too poor. First, there is no clear discussion, at least based on data. There are several approaches to extract relevant variables from the trees in the forest. I would suggest feature contribution measures such as the ones provided by the R package rfFC. Further the analysis provided by removing some variables is not fully discussed. The main results, by looking at the graphs and measures, are two and only one is discussed. the authors acknowledge the role of distance, and its temporal dynamics. But hyperlinks look like extremely irrelevant and for all periods. This point, which is one of the main assumptions of the paper is not discussed, but it must be.**
 
-Regarding the feature contribution and feature importance, our aim here is to build predictive models capable of making *out of sample* predictions for interregional trade flows. As you indicated our models are successful in doing that. We empirically tested the importance of the features we employed. Instead of presenting the results of the feature importance, which are based on in-sample estimations, we opted towards re-running our models and remove some of the features. We then tested these models in out of sample data and these results are presented in Figure 5 and discussed in second to last paragraph of section 5 (**ADD PAGE NUMBER**). This process allows us to assess the role of hyperlinks on out of sample interregional trade predictions. Indeed, the previous text was not entirely clear regarding the two new specifications, the results of which are presented in Figure 5. We have now corrected this and we explicitly highlight the value of our results in comparison to the alternative specifications presented here.
+Regarding the feature contribution and feature importance, our aim here is to build predictive models capable of making *out of sample* predictions for interregional trade flows. As you indicated our models are successful in doing that. We empirically tested the importance of the features we employed. Instead of presenting the results of the feature importance, which are based on in-sample estimations, we opted towards re-running our models and remove some of the features. We then tested these models in out of sample data and these results are presented in Figure 5 and discussed in second to last paragraph of section 5 (p. 15). This process allows us to assess the role of hyperlinks on out of sample interregional trade predictions. Indeed, the previous text was not entirely clear regarding the two new specifications, the results of which are presented in Figure 5. We have now corrected this and we explicitly highlight the value of our results in comparison to the alternative specifications presented here.
 
 > To further assess the role of our main variable of interest – the volume of hyperlinks
 > between regions – in predicting interregional trade flows we estimate the first set of
@@ -349,9 +360,9 @@ Regarding the feature contribution and feature importance, our aim here is to bu
 > Nevertheless, the predictive capacity of distance remains unchallenged at large as the
 > green lines in Figure 5 indicate.
 
-We also tried to use the `rfFC` package as recommended, but unfortunately the functions from this package do not work anymore. We suspect that this is because the package is not maintained anymore as its last update according to its [github](https://github.com/r-forge/rffc) page is from 2015.
+We also tried to use the `rfFC` package as recommended, but unfortunately the functions from this package do not work anymore. We suspect that this is because the package is not maintained  as its last update according to its [github page](https://github.com/r-forge/rffc) is from 2015.
 
-In addition, the paper now includes further justification of the other features included in the model. The below paragraph is placed in the Data section in p. **TO ADD**:
+In addition, the paper now includes further justification of the other features included in the model. The below paragraph is placed in the Data section in p. 11:
 
 > These control variables (employment and population density) are included following gravity-type functions that are common when estimating economic flows between two geographical points (trade, migration, commuting, etc.). Such models normally use attraction factors (as the masses of the two regions) such as gross income in the region/country (Anderson and van Wincoop, 2003; Riddington et al., 2006), or employment as a proxy when Gross Value Added (GVA) or GDP data is not available  (Kimura and Lee, 2006). Also, employment by sector is often used in the estimation process of regionalization of Input-Output models by the means of Location Quotients (Flegg and Webber, 2000). We choose employment because it is also available at a more disaggregated geographical level. Population density controls for the agglomeration of the regions complementing the employment variable in determining the economic size of the bodies (Greene, 2013). Distance works as a resistance effect. In addition, given the aim of the paper to predict interregional trade flows, we opted towards parsimony and, therefore, we tried to minimise the number of predictors.
 
@@ -359,11 +370,13 @@ In addition, the paper now includes further justification of the other features 
 
 **Finally, I think the figures could be improved by being more specific on titles (with details of graph pane title when multiple panes are present) and axis titles. That information is always included in the caption, but would be easier for the reader to see it printed on the graph.**
 
-**GW, i think the only figure we can change is Figure 7. How about, Birmingham predicted imports, Birmingham predicted exports, etc. instead of Predicted flows?**
+Figure 7 has now been amended.
 
 ---
 
 ---
+
+\newpage
 
 ## Reviewer: 4
 
@@ -381,7 +394,7 @@ We have now amended the paper title: Using the web to predict regional trade flo
 
 **It is stated that, “Our underpinning hypothesis is that trade leaves behind digital breadcrumbs (Rabari and Storper 2014), which can be effectively utilised to predict interregional trade flows”. I think it would be useful to revise this to PHYSICAL trade leaves behind digital breadcrumbs” it might be useful to even further clarify that these breadcrumbs can be used to reconstruct a proxy to those physical trade linkages, rather than predict them. I think the difference here is that one is a representation of another phenomenon, where as a prediction usually relates to some kind of model based on other phenomena.**
 
-We have now amended abovementioned sentence as per the below. We do understand the *proxy* point, but as we are not just building a proxy variable, so opted towards using the verb *capture* in the below.
+We have now amended the above-mentioned sentence as per the below. We do understand the *proxy* point, but as we are not just building a proxy variable, so opted towards using the verb *capture* in the below.
 
 > Our underpinning hypothesis is that physical trade leaves behind digital breadcrumbs (Rabari and Storper 2014), which can be effectively utilised to capture interregional trade flows, which are both important for regional policies and also very difficult to observe.
 
@@ -449,9 +462,9 @@ Regarding zero flows, we do have OD pairs with zero hyperlinks for some years, b
 
 We do appreciate that the unstructured nature of our data makes it not straightforward to communicate their specificities. The data section (4) of the paper included the following:
 
-> The first includes all the archived .uk webpages the web text of which contains at least one string in the form of a UK postcode, e.g. "B1 1AA", and we use this information to geolocated these wepbages and the websites these webpages are contained within.
+> The first includes all the archived .uk webpages the web text of which contains at least one string in the form of a UK postcode, e.g. "B1 1AA", and we use this information to geolocated these wepbages and the websites these webpages are contained within.
 
-In essence, the html documents of all the archived .uk web pages were scanned to identify alphametric strings similar to UK postcodes. Our aggregation processes allows us to assess this information not at the webpage level, but instead at the website and, therefore, we use these terms carefully in the paper. We observe websites with a range of postcodes from one unique postcode to thousands as per Table 1. Our expectation is that the postcodes included in websites with only one unique postcode represent the trading addresses of these commercial activities. In other words, these are the 'contact us' type of webpages. We believe that this is a fair expectation as we know from the literature that commercial websites perform specific missions. See for instance the below amended text in p. **TOADD**:
+In essence, the .html documents of all the archived .uk web pages were scanned to identify alphametric strings similar to UK postcodes. Our aggregation processes allows us to assess this information not at the webpage level, but instead at the website and, therefore, we use these terms carefully in the paper. We observe websites with a range of postcodes from one unique postcode to thousands as per Table 1. Our expectation is that the postcodes included in websites with only one unique postcode represent the trading addresses of these commercial activities. In other words, these are the 'contact us' type of webpages. We believe that this is a fair expectation as we know from the literature that commercial websites perform specific missions. See for instance the below amended text in p. 9:
 
 > Regarding the geolocation of such commercial websites, given that their mission is to
 > support businesses (Blazquez and Domenech 2018), we expect that the self-reported
@@ -482,7 +495,7 @@ Mikkonen, K., & Luoma, M. (1999). The parameters of the gravity model are changi
 
 Oshan, T. M. (2020). Potential and Pitfalls of Big Transport Data for Spatial Interaction Models of Urban Mobility. The Professional Geographer, 72(4), 468–480. https://doi.org/10.1080/00330124.2020.1787180
 
-Thank you. We certainly agree with this comment and we have added the following text a few lines below (p. **ADD PAGE NUMBER**)
+Thank you. We certainly agree with this comment and we have added the following text a few lines below (p. 7)
 
 > Importantly, it helps avoid overfitting, which would have occurred if the temporal structure of the data and the underpinning time-dependent data generation processes had been ignored. Such discussions can be found in the spatial interaction modelling literature  (Mikkonen and Luoma 1999; Mozolin, Thill, and Usery 2000; Oshan 2020a).
 
@@ -494,7 +507,7 @@ Yes, we matched yearly the explanatory variables with the outcome variable. We t
 
 > To estimate RF models we employ the widely used caret package for R (Kuhn et al. and we build the following rolling forecasting workflow: (1) train RF models on data from years t and t+1 from the study period 2000-2010 to increase the size of the training dataset; (2) evaluate their predictive capability using cross validation (CV); (3) apply the estimated RF models from step (1) on unseen data from the following year (t+2) to predict trade flows for that year and evaluate their predictive capability of such unseen data.
 
-To further clarify the process, we have added the following text in the Results section (p. **ADD PAGE NUMBER**):
+To further clarify the process, we have added the following text in the Results section (p. 13):
 
 > In other words, we used the models trained with data from years t and t + 1 and
 > the explanatory variables for year t + 2 to forecast interregional trade for year t + 2.
@@ -507,4 +520,4 @@ We hope that this addition helps. We opted against including this description fr
 
 **Finally, the manuscript could benefit from some additional grammatical editing and correction of typos. These were not typically problematic for understanding the content, but the further polishing would strengthen the contribution of this manuscript. on the JISC UK dataset and the construction of the extracted data instead of the importance of the framework.**
 
-**GW**
+The paper has been edited by a native English speaker.
