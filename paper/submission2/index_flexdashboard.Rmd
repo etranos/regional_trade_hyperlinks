@@ -1,0 +1,196 @@
+---
+title: 'Using the web to predict regional trade flows: data extraction, modelling, and validation. Supplemental Material.'
+output: 
+  flexdashboard::flex_dashboard:
+    vertical_layout: fill
+    orientation: columns
+    social: menu
+---
+
+<!-- knit: (function(inputFile, encoding) { -->
+<!--     rmarkdown::render(inputFile, encoding = encoding, output_dir = "../paper/v2_taylor_francis/") -->
+<!--   }) -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis')
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+devtools::install_github("dmurdoch/leaflet@crosstalk4") # special edit of package for maps install first
+
+library(tidyverse)
+library(gridExtra)
+library(rgdal)
+library(maps)
+library(rprojroot)
+library(kableExtra)
+#library(cowplot)
+library(ggthemes)
+
+library(leaflet)
+library(rprojroot)
+library(sf)
+library(crosstalk)
+library(DT)
+
+library(geosphere)
+library(RColorBrewer)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+
+```{r Load_data}
+path.data <- paste0(path, "/data_inter/test_t2.RData") #where total and LAD is located
+load(path.data)
+#total <- read_csv("total.csv", col_types = cols(X1 = col_skip())) # if local
+
+Mapping_df <- total %>% 
+  dplyr::select(orig, dest, id, io,hl, central.orig, central.dest, year)
+
+# I need to repeat `find_rstudio_root_file()` otherwise it turns back to .Rmd floder
+path <- find_rstudio_root_file()
+shp <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "NUTS_RG_01M_2010_4326_LEVL_2",
+               verbose=FALSE)
+
+shp_UK <- subset(shp, NUTS_ID %in% Mapping_df$orig) 
+centroids <- SpatialPointsDataFrame(coordinates(shp), data = as(shp, "data.frame")[c("NUTS_ID")])
+#merge data for origins and destinations
+Mapping_df <- merge(Mapping_df, centroids, by.x="orig", by.y="NUTS_ID") 
+Mapping_df <- merge(Mapping_df, centroids, by.x="dest", by.y="NUTS_ID")
+Names <- shp_UK@data[,c(2,4)]
+Mapping_df <- merge(Mapping_df, Names, by.x="dest", by.y = "NUTS_ID")
+Mapping_df <- merge(Mapping_df, Names, by.x="orig", by.y = "NUTS_ID")
+names(Mapping_df) <- c("orig", "dest", "id_flow", "io", "hl", "central.orig", "central.dest","Year", "lng_orig", "lat_orig","lng_dest", "lat_dest", "Destination", "Origin")
+Mapping_df <- Mapping_df[,c(1,2,3,4,5,6,7,8,11,12,9,10,13,14)]
+
+#filter for flows 50+ to avoid overcrowding
+Mapping_df <- Mapping_df %>%
+  filter(Mapping_df$hl>99) #it was 49
+```
+
+Column {data-width=800}
+-----------------------------------------------------------------------
+
+### Hyperlink flows plotted for all years, for all links 100 or more. See [Tranos et al. (2022)]() for more details. 
+
+```{r HL flow maps}
+# create specific SP dataframe
+flows <- gcIntermediate(Mapping_df[,9:10], Mapping_df[,11:12], sp = TRUE, addStartEnd = TRUE)
+flows$ID <- Mapping_df$id_flow #id for label
+flows$hl <- Mapping_df$hl #hl
+flows$hl_log <- log(Mapping_df$hl)/9 #for pal
+flows$io <- round(Mapping_df$io,1)
+flows$origins <- Mapping_df$orig
+flows$destinations <- Mapping_df$dest
+flows$Year <- Mapping_df$Year
+flows$Year_format <- as.Date(as.character(Mapping_df$Year), format = "%Y")# no commas
+flows$Origin <- Mapping_df$Origin
+flows$Destinaton <- Mapping_df$Destination
+
+# create crosstalk sharedata
+sd_map <- SharedData$new(flows)
+sd_df <- SharedData$new(as.data.frame(flows@data), group = sd_map $groupName())
+
+pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
+
+#filters
+filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~hl, step=50, max = 40000, width = 600)
+filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
+filter_select("Origin", "Origin", sd_df, ~Origin)
+
+#map
+bscols(
+  leaflet() %>%
+    addProviderTiles("CartoDB.Positron") %>%
+    addPolylines(data = sd_map, weight = ~hl_log, color = ~pal(hl_log), label = ~ID)
+)
+
+```
+
+Column 
+-----------------------------------------------------------------------
+
+### Hyperlinks
+
+```{r}
+#datatable
+bscols(
+  datatable(sd_df, extensions="Scroller", style="bootstrap", class="compact", width="100%", 
+            options=list(deferRender=TRUE, scrollY=300, scroller=TRUE,columnDefs = list(list(visible=FALSE, targets=c(3,5,6,8)))))
+  #remove unwanted rows from view
+)
+```
+
+### Trade flow predictions between Local Authority Districts.
+
+```{r LADs, echo=FALSE, warning=FALSE}
+path <- find_rstudio_root_file()
+path.data <- paste0(path, "/data_inter/test_t2.RData")
+load(path.data)
+
+#lad_prediction <- read_csv("lad_prediction.csv", col_types = cols(X1 = col_skip())) # if local
+
+# I need to repeat `find_rstudio_root_file()` otherwise it turns back to .Rmd floder
+path <- find_rstudio_root_file()
+path.predictions <- paste0(path, "/data_inter/lad_prediction.csv")
+lad_prediction <- read_csv(path.predictions, col_types = cols(X1 = col_skip()))
+
+Lad_df <- lad_prediction %>% 
+  dplyr::select(orig, dest, id, model.all2009, hl, year, lad.orig, lad.dest)
+
+#shapefile and centroids
+shp_LA <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC", 
+                  verbose=FALSE)
+shp_UK_LA <- subset(shp_LA, lad18cd %in% Mapping_df$orig)
+centroids_LA <- as.data.frame(shp_LA)[,c(2,7,8)]
+
+# merge for spatial units
+lad_prediction <- merge(Lad_df, centroids_LA, by.x="orig", by.y="lad18cd")
+lad_prediction<- merge(lad_prediction, centroids_LA, by.x="dest", by.y="lad18cd")
+
+#remove self-links
+#lad_prediction <- lad_prediction %>%
+ #filter(!orig==dest)
+
+# DF for maps
+names(lad_prediction) <- c("dest", "orig", "id_flow", "prediction_2009", "hl", "year", "Origin","Destination", "lng_orig", "lat_orig","lng_dest", "lat_dest")
+
+flows_lad <- gcIntermediate(lad_prediction[,9:10], lad_prediction[,11:12], sp = TRUE, addStartEnd = TRUE)
+flows_lad$ID <- lad_prediction$id_flow
+flows_lad$prediction <- round(lad_prediction$prediction_2009, 2)
+flows_lad$prediction_log <- log(lad_prediction$prediction_2009)
+flows_lad$hl <- lad_prediction$hl
+flows_lad$origins <- lad_prediction$orig
+flows_lad$destinations <- lad_prediction$dest
+flows_lad$Origin <- lad_prediction$Origin
+flows_lad$Destinaton <- lad_prediction$Destination
+
+
+# create crosstalk sharedata
+lad_map <- SharedData$new(flows_lad)
+lad_df <- SharedData$new(as.data.frame(flows_lad@data), group = lad_map $groupName())
+
+pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
+
+#filters
+filter_slider("Prediction", "Prediction", lad_df, column=~prediction, step=50, max = 64000, width = 600)
+
+filter_select("Origin", "Origin", lad_df, ~Origin)
+
+
+#maps
+# bscols(
+#   leaflet() %>%
+#     addProviderTiles("CartoDB.Positron") %>%
+#     addPolylines(data = lad_map, weight = ~prediction_log, color = ~pal(prediction_log), label = ~ID)
+# )
+
+#datatable
+bscols(
+  datatable(lad_df, extensions="Scroller", style="bootstrap", class="compact", width="100%", options=list(deferRender=TRUE, scrollY=300, scroller=TRUE, columnDefs = list(list(visible=FALSE, targets=c(3,5,6)))))
+)
+```
+
+
+

@@ -63,7 +63,7 @@ Mapping_df <- Mapping_df %>%
 
 # Hyperlink data
 
-Below is the hyperlink data plotted for all years, for all links 100 or more.
+Below is the plot for the hyperlink flow data for all years and for all NUTS2 pairs with 100 or more hyperlinks.
 
 ```{r HL flow maps}
 # create specific SP dataframe
