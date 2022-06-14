@@ -2,31 +2,11 @@
 title: |
   Using the web to predict regional trade flows: data extraction, modelling, and validation
 author:
-  - name: Emmanouil Tranos
-    affil: a, b, \dagger
-    email: e.tranos@bristol.ac.uk
-  - name: Andre Carrascal Incera
-    affil: c
-    email: carrascalandre@uniovi.es
-  - name: George Willis
-    affil: d
-    email: GCW519@student.bham.ac.uk
+  - name: 
+    affil: a
 affiliation:
   - num: a
-    address: |
-      University of Bristol, UK
-  - num: b
-    address: |
-      The Alan Turing Institute, UK
-  - num: c
-    address: |
-      University of Oviedo, Spain
-  - num: d
-    address: |
-      University of Birmingham, UK
-  - num: \dagger
-    address: |
-      Corresponding author
+    address:
 bibliography: bibliography.bib
 abstract: |
   Despite the importance of interregional trade for building effective regional economic policies, there is very little hard data to illustrate such interdependencies. We propose here a novel research framework to predict interregional trade flows by utilising freely available web data and machine learning algorithms. Specifically, we extract hyperlinks between archived websites in the UK and we aggregate these data to create an interregional network of hyperlinks between geolocated and commercial webpages over time. We also use some existing interregional trade data to train our models using random forests and then make out-of-sample predictions of interregional trade flows using a rolling-forecasting framework. Our models illustrative great predictive capability with $R^2$ greater than 0.9. We are also able to disaggregate our predictions in terms of industrial sectors, but also at a sub-regional level, for which trade data are not available. In total, our models provide a proof of concept that the digital traces left behind by physical trade can help us capture such economic activities at a more granular level and, consequently, inform regional policies.

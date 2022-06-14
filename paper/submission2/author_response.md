@@ -462,7 +462,7 @@ Regarding zero flows, we do have OD pairs with zero hyperlinks for some years, b
 
 We do appreciate that the unstructured nature of our data makes it not straightforward to communicate their specificities. The data section (4) of the paper included the following:
 
-> The first includes all the archived .uk webpages the web text of which contains at least one string in the form of a UK postcode, e.g. "B1 1AA", and we use this information to geolocated these wepbages and the websites these webpages are contained within.
+> The first includes all the archived .uk webpages the web text of which contains at least one string in the form of a UK postcode, e.g. "B1 1AA", and we use this information to geolocated these wepbages, and the websites these webpages are contained within.
 
 In essence, the .html documents of all the archived .uk web pages were scanned to identify alphametric strings similar to UK postcodes. Our aggregation processes allows us to assess this information not at the webpage level, but instead at the website and, therefore, we use these terms carefully in the paper. We observe websites with a range of postcodes from one unique postcode to thousands as per Table 1. Our expectation is that the postcodes included in websites with only one unique postcode represent the trading addresses of these commercial activities. In other words, these are the 'contact us' type of webpages. We believe that this is a fair expectation as we know from the literature that commercial websites perform specific missions. See for instance the below amended text in p. 9:
 
