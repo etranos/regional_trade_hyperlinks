@@ -399,11 +399,10 @@ temporal out-of-sample predictions of data, which are skewed and have
 outliers (see for instance Figure \ref{prediction}).
 
 RF have been extensively utilised in answering regression research
-problems. \citet{pourebrahim2019trip} coupled a traditional
-methodological framework -- gravity and spatial interaction modelling --
-with ML techniques including RF as well as data from online social media
-to predict commuting flows in New York City. \citet{lima2020predicting}
-used ML and RF to predict and explain corruption across countries.
+problems. For instance, \citet{pourebrahim2019trip} coupled a
+traditional methodological framework -- gravity and spatial interaction
+modelling -- with ML techniques including RF as well as data from online
+social media to predict commuting flows in New York City.
 \citet{sinha2019assessing} open a dialogue on the need for spatial
 ensemble learning approaches, such as RF, aimed to be used with spatial
 data with high autocorrelation and heterogeneity. \citet{creditspatial}
@@ -412,14 +411,7 @@ Angeles. \citet{guns2014recommending} use RF to predict and recommend
 high-potential research collaborations, which have not yet been
 materialised. \citet{ren2019predicting} trained RF as well as other
 classifiers to predict socio-economic status or cities using a variety
-of online and mobility predictors. \citet{wang2017structure} employed RF
-and other machine learning algorithms to predict urban socio-economic
-characteristic based on non-emergency urban requests or complaints
-reported to the 311 phone number. RF tend to perform better than other
-algorithms in predicting, for example, real estate prices, income per
-capita, percentage of residents with a graduate degree, percentage of
-unemployed residents, percentage of residents living below the poverty
-level, as well as demographic characteristics for 30 US cities.
+of online and mobility predictors.
 
 RF is a tree-based ensemble learning algorithm
 \citep{breiman2001random}. It starts by creating random samples of the
@@ -962,7 +954,7 @@ year & RMSE & Rsquared & MAE \\
 The final step in our workflow is to utilise the NUTS2 models we trained
 and validated for a more spatially disaggregated application. This
 exercise illustrates the value of our research framework in mapping
-interregional trade flows at adissagregated spatial level, at which
+interregional trade flows at a dissagregated spatial level, at which
 usually such data are not collected. Specifically, we take advantage of
 the point nature of our hyperlink data and we aggregate them at the
 Local Authority District (LAD) level. This is the main subnational
@@ -970,10 +962,12 @@ administrative division in the UK. We then apply the NUTS2 model, which
 was trained on data from \(2008\) and \(2009\) and tested on \(2010\)
 trade data, on the LAD hyperlinks, employment, population density and
 distance data and we make predictions regarding LAD to LAD trade flows
-for \(2010\), the most recent data. Although we are not able to validate
-these predictions at the LAD level as there is no trade data available
-at this level, this exercise provides a unique opportunity to map trade
-flows at this level of spatial granularity.
+for \(2010\), the most recent data \footnote{We opted towards presenting
+  the predictions for \(2010\) as this was the latest year we had data
+  for.}. Although we are not able to validate these predictions at the
+LAD level as there is no trade data available at this level, this
+exercise provides a unique opportunity to map trade flows at this level
+of spatial granularity.
 
 We briefly discuss here the predictions for two LAD: Camden in central
 London and Birmingham , the second biggest city in the UK. We present
@@ -1047,6 +1041,50 @@ supply chain disruptions is essential for the regional wellbeing, as the
 recent Covid-19 crisis has shown us. This can help us to anticipate
 local exposures and knock-on effects to shocks and to elaborate
 mitigating policies almost in real time.
+
+\hypertarget{acknowledgements}{%
+\section*{Acknowledgements}\label{acknowledgements}}
+\addcontentsline{toc}{section}{Acknowledgements}
+
+The authors would like to thank the editor and the anonynous reviewers
+for their constructive comments. The first author would also like to
+thank the QuSS Research Group at the School of Geographical Sciences at
+the University of Bristol and also the participants and the organisers
+of the Spatial analytics + data seminar series.
+
+\hypertarget{author-biographies}{%
+\section*{Author Biographies}\label{author-biographies}}
+\addcontentsline{toc}{section}{Author Biographies}
+
+EMMANOUIL TRANOS is a Reader in Quantitative Human Geography at the
+University of Bristol in the UK and a fellow at the Alan Turing
+Institute. His research has been exposing the spatial dimensions of
+digital technologies and the digital economy from their early stages
+until today. E-mail:
+\href{mailto:e.tranos@bristol.ac.uk}{\nolinkurl{e.tranos@bristol.ac.uk}},
+Twitter: \href{https://twitter.com/EmmanouilTranos}{@EmmanouilTranos},
+Personal website: \href{https://etranos.info/}{etranos.info}.
+
+\bigskip
+
+\noindent ANDRÉ CARRASCAL-INCERA is an Assistant Professor in the
+Department of Economics at the University of Oviedo, Asturias, Spain.\\
+His lines of research are related to the generation and distribution of
+income in multirregional systems and the development of economy-wide
+models at the regional level. E-mail:
+\href{mailto:carrascalandre@uniovi.es}{\nolinkurl{carrascalandre@uniovi.es}},
+Twitter: \href{https://twitter.com/Andre_Carrascal}{@Andre\_Carrascal},
+Personal website:
+\url{https://sites.google.com/view/andrecarrascalincera}.
+
+\bigskip
+
+\noindent GEORGE WILLIS is a doctoral student in the School of Geography
+at the University of Birmingham, UK. His research interests include
+quantitative methods in Geography, focusing on the spatiotemporal
+patterns of urban shrinkage in China. E-mail:
+\href{mailto:gcw519@bham.ac.uk}{\nolinkurl{gcw519@bham.ac.uk}}, Twitter:
+\href{https://twitter.com/GeorgeWGeog}{@GeorgeWGeog}.
 
 \bibliographystyle{tfcad}
 \bibliography{bibliography.bib}

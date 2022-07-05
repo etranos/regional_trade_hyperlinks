@@ -343,10 +343,10 @@ predictions of data, which are skewed and have outliers (see for instance Figure
 <!-- random forests examples/review -->
 RF have been extensively utilised in answering regression research problems.
 <!-- @cheng2019applying used RF to model and predict travel mode choices based on travel diary data from Nanjing, China. -->
-@pourebrahim2019trip coupled a traditional methodological framework -- gravity and 
+For instance, @pourebrahim2019trip coupled a traditional methodological framework -- gravity and 
 spatial interaction modelling -- with ML techniques including RF as well as data 
 from online social media to predict commuting flows in New York City.
-@lima2020predicting used ML and RF to predict and explain corruption across countries.
+<!-- @lima2020predicting used ML and RF to predict and explain corruption across countries. -->
 <!-- @robinson2018machine used XGBoost and Artificial Neural Network models to predict global migration. -->
 <!-- @scheuer2018combining RF for classification problem regarding residential housing choices -->
 <!-- @tribby2017analyzing used RF to select variables associated with walking route choice models -->
@@ -358,13 +358,13 @@ Los Angeles.
 @guns2014recommending use RF to predict and recommend high-potential research collaborations, which have not yet been materialised.
 @ren2019predicting trained RF as well as other classifiers to predict socio-economic 
 status or cities using a variety of online and mobility predictors.
-@wang2017structure employed RF and other machine learning algorithms to predict 
-urban socio-economic characteristic based on non-emergency urban requests or complaints 
-reported to the 311 phone number. RF tend to perform better than other algorithms 
-in predicting, for example, real estate prices, income per capita, percentage of 
-residents with a graduate degree, percentage of unemployed residents, percentage 
-of residents living below the poverty level, as well as demographic characteristics 
-for 30 US cities.
+<!-- @wang2017structure employed RF and other machine learning algorithms to predict  -->
+<!-- urban socio-economic characteristic based on non-emergency urban requests or complaints  -->
+<!-- reported to the 311 phone number. RF tend to perform better than other algorithms  -->
+<!-- in predicting, for example, real estate prices, income per capita, percentage of  -->
+<!-- residents with a graduate degree, percentage of unemployed residents, percentage  -->
+<!-- of residents living below the poverty level, as well as demographic characteristics  -->
+<!-- for 30 US cities. -->
 
 RF is a tree-based ensemble learning algorithm [@breiman2001random]. It starts by creating 
 random samples of the training data, which are then used to grow an equivalent number 
@@ -735,7 +735,9 @@ fit.model.all.res$values %>% #extract the values
   mutate(model = gsub("model.all", "", model)) %>%
   #all.metrics$year <- gsub("X", "", all.metrics$year) # couldn't put the gsub in the chain
   ggplot()+ #call ggplot
-  geom_boxplot(aes(x = RMSE, y = model)) -> RMSE #and plot the box plot
+  geom_boxplot(aes(x = RMSE, y = model)) +
+  #theme(axis.text.x=element_text(size=rel(0.5), angle=90)) 
+  scale_x_continuous(breaks=seq(0, 6000, 2000)) -> RMSE #and plot the box plot
 
 RMSE <- RMSE +
   ylab("")
@@ -784,6 +786,12 @@ grid.arrange(
   Rsquared, MAE, RMSE,
   nrow = 1, ncol = 3)
   #top = "Accuracy metrics")
+
+# path <- find_rstudio_root_file()
+# path.out <- paste0(path, "/paper/submission2/figures/accuracy.tiff")
+# ggsave(path.out, device='tiff', dpi=700, plot=grid.arrange(
+#   Rsquared, MAE, RMSE,
+#   nrow = 1, ncol = 3))
 ```
 
 To avoid overfitting and test the predictive capacity of our models on unseen data
@@ -894,6 +902,10 @@ ggplot(data = pred.by.year.all,aes(x = io, y = predictions)) +
   #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
   #ggtitle("Predicted vs. observed interregional trade by year") +
   ylab("Predicted") + xlab("Observed")
+
+path <- find_rstudio_root_file()
+path.out <- paste0(path, "/paper/submission2/figures/pred_obs.tiff")
+ggsave(path.out, device='tiff', dpi=700)
 
 ```
 
@@ -1040,6 +1052,11 @@ mae.plot <- ggplot(all) +
   scale_x_continuous(breaks=c(2002, 2006, 2010))
 
 rmse.plot + rsquared.plot / mae.plot
+
+path <- find_rstudio_root_file()
+path.out <- paste0(path, "/paper/submission2/figures/accuracy_alt.tiff")
+ggsave(path.out, device='tiff', dpi=700)
+
 ```
 
 <!-- alternative samples -->
@@ -1116,13 +1133,18 @@ ggplot(data = pred.by.year.all,aes(x = io, y = predictions)) +
   #ggtitle("Predicted vs. observed interregional trade by year") +
   ylab("Predicted") + xlab("Observed")
 
+path <- find_rstudio_root_file()
+path.out <- paste0(path, "/paper/submission2/figures/pred_obs_alt.tiff")
+ggsave(path.out, device='tiff', dpi=700)
+
+
 ```
 
 # A local level application
 
 The final step in our workflow is to utilise the NUTS2 models we trained and validated
 for a more spatially disaggregated application. This exercise illustrates the value
-of our research framework in mapping interregional trade flows at adissagregated 
+of our research framework in mapping interregional trade flows at a dissagregated 
 spatial level, at which usually such data are not collected.
 Specifically, we take advantage of 
 the point nature of our hyperlink data and we aggregate them at the Local Authority 
@@ -1131,7 +1153,9 @@ This is the main subnational administrative division in the UK.
 We then apply the NUTS2 model, which was trained on data from $2008$ and $2009$
 and tested on $2010$ trade data, on the LAD hyperlinks, employment, population density 
 and distance data and we make predictions regarding LAD to LAD trade flows for $2010$,
-the most recent data.
+the most recent data
+^[We opted towards presenting the predictions for $2010$ as this was the latest 
+year we had data for.].
 Although we are not able to validate these predictions at the LAD level as there 
 is no trade data available at this level, this exercise provides a unique opportunity 
 to map trade flows at this level of spatial granularity.
@@ -1273,5 +1297,35 @@ disruptions is essential for the regional wellbeing, as the recent Covid-19 cris
 has shown us. This can help us to anticipate local exposures and knock-on effects 
 to shocks and to elaborate mitigating policies almost in real time.
 
+# Acknowledgements {-}
+
+The authors would like to thank the editor and the anonynous reviewers for their
+constructive comments. The first author would also like to thank the QuSS Research
+Group at the School of Geographical Sciences at the University of Bristol and also
+the participants and the organisers of the Spatial analytics + data seminar series.
+
+# Author Biographies {-}
+
+EMMANOUIL TRANOS is a Reader in Quantitative Human Geography at the University of
+Bristol in the UK and a fellow at the Alan Turing Institute. His research has been 
+exposing the spatial dimensions of digital technologies and the digital economy 
+from their early stages until today. E-mail: [e.tranos@bristol.ac.uk](mailto:e.tranos@bristol.ac.uk), Twitter: [\@EmmanouilTranos](https://twitter.com/EmmanouilTranos), Personal website: [etranos.info](https://etranos.info/).
+
+\bigskip
+\noindent
+ANDRÉ CARRASCAL-INCERA is an Assistant Professor in the Department of Economics 
+at the University of Oviedo, Asturias, Spain.  
+His lines of research are related to the generation and distribution of income in multirregional systems and the development of economy-wide models at the regional level.
+E-mail: [carrascalandre@uniovi.es](mailto:carrascalandre@uniovi.es), 
+Twitter: [\@Andre_Carrascal](https://twitter.com/Andre_Carrascal),
+Personal website: [https://sites.google.com/view/andrecarrascalincera](https://sites.google.com/view/andrecarrascalincera).
+
+\bigskip 
+\noindent
+GEORGE WILLIS is a doctoral student in the School of Geography at the University 
+of Birmingham, UK. His research interests include quantitative methods in Geography, 
+focusing on the spatiotemporal patterns of urban shrinkage in China.
+E-mail: [gcw519@bham.ac.uk](mailto:gcw519@bham.ac.uk),
+Twitter: [\@GeorgeWGeog](https://twitter.com/GeorgeWGeog).
 
 # References
