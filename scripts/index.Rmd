@@ -119,8 +119,8 @@ Column {data-width=400}
 filter_select("Origin", "Origin", sd_df, ~Origin)
 
 #datatable
-datatable(sd_df, extensions="Scroller", style="bootstrap", class="compact", width="100%",
-          options=list(deferRender=TRUE, scrollY=300, scroller=TRUE,columnDefs = list(list(visible=FALSE, targets=c(3,5,6,8)))))
+datatable(sd_df, extensions="Scroller", style="bootstrap", class="compact", width="100%",rownames= FALSE,
+          options=list(deferRender=TRUE, scrollY=300, scroller=TRUE,columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5,7)))))
   #remove unwanted rows from view
 
 ```
@@ -211,9 +211,9 @@ Column {data-width=400}
 
 filter_select("Origin", "Origin", lad_df, ~Origin)
 #datatable
-datatable(lad_df, extensions="Scroller", style="bootstrap", class="compact",
+datatable(lad_df, extensions="Scroller", style="bootstrap", class="compact",rownames= FALSE,
           width="100%", options=list(deferRender=TRUE, scrollY=300,
-                                     scroller=TRUE, columnDefs = list(list(visible=FALSE, targets=c(3,5,6)))))
+                                     scroller=TRUE, columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5)))))
 ```
 
 <br>
