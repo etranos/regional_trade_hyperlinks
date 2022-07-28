@@ -214,6 +214,7 @@ ggsave(file="outputs/flow_maps.png", graphs, dpi = 600)
 
 ```{r Mapping Predictions}
 lad <- readOGR("https://opendata.arcgis.com/datasets/3a4fa2ce68f642e399b4de07643eeed3_0.geojson")
+lad <- st_as_sf(lad)
 # also saved locally under \data\lad\Local_Authority_Districts_(December_2019)_Boundaries_UK_BUC.geojson 
 
 # projection
@@ -230,33 +231,35 @@ LAD_bham_ex <- LAD_bham_ex[, c(2,3,1)]
 LAD_bham_im <- LAD_bham_im[, c(2,3,1)]
 LAD_camd_ex <- LAD_camd_ex[, c(2,3,1)]
 LAD_camd_im <- LAD_camd_im[, c(2,3,1)]
-LAD_ab_ex <- LAD_ab_ex[, c(2,3,1)]
-LAD_ab_im <- LAD_ab_im[, c(2,3,1)]
 
 # ensure largest flows plotted last
 LAD_bham_ex <- LAD_bham_ex %>%
   arrange(model.all2009)
 LAD_bham_ex <- LAD_bham_ex %>% filter(model.all2009 < 20000)
 tf_LAD_bham_ex <-od2line(flow = LAD_bham_ex, zones = lad, zone_code = "lad19cd") 
-tf_LAD_bham_ex@data$lwd <- log(tf_LAD_bham_ex@data$model.all2009)/3
+#tf_LAD_bham_ex@data$lwd <- log(tf_LAD_bham_ex@data$model.all2009)/3
+tf_LAD_bham_ex$lwd <- log(tf_LAD_bham_ex$model.all2009)/3
 
 LAD_bham_im <- LAD_bham_im %>%
   arrange(model.all2009)
 LAD_bham_im <- LAD_bham_im %>% filter(model.all2009 < 20000)
 tf_LAD_bham_im <-od2line(flow = LAD_bham_im, zones = lad, zone_code = "lad19cd") 
-tf_LAD_bham_im@data$lwd <- log(tf_LAD_bham_im@data$model.all2009)/3
+#tf_LAD_bham_im@data$lwd <- log(tf_LAD_bham_im@data$model.all2009)/3
+tf_LAD_bham_im$lwd <- log(tf_LAD_bham_im$model.all2009)/3
 
 LAD_camd_ex <- LAD_camd_ex %>%
   arrange(model.all2009)
 LAD_camd_ex <- LAD_camd_ex %>% filter(model.all2009 < 20000)
 tf_LAD_camd_ex <-od2line(flow = LAD_camd_ex, zones = lad, zone_code = "lad19cd") 
-tf_LAD_camd_ex@data$lwd <- log(tf_LAD_camd_ex@data$model.all2009)/3
+#tf_LAD_camd_ex@data$lwd <- log(tf_LAD_camd_ex@data$model.all2009)/3
+tf_LAD_camd_ex$lwd <- log(tf_LAD_camd_ex$model.all2009)/3
 
 LAD_camd_im <- LAD_camd_im %>%
   arrange(model.all2009)
 LAD_camd_im <- LAD_camd_im %>% filter(model.all2009 < 20000)
 tf_LAD_camd_im <-od2line(flow = LAD_camd_im, zones = lad, zone_code = "lad19cd") 
-tf_LAD_camd_im@data$lwd <- log(tf_LAD_camd_im@data$model.all2009)/3
+#tf_LAD_camd_im@data$lwd <- log(tf_LAD_camd_im@data$model.all2009)/3
+tf_LAD_camd_im$lwd <- log(tf_LAD_camd_im$model.all2009)/3
 
 #plot with tmap
 flow_bham_ex <- tm_shape(lad)+tm_borders(lwd = 0.5)+
@@ -265,6 +268,7 @@ flow_bham_ex <- tm_shape(lad)+tm_borders(lwd = 0.5)+
     title.col = "Predicted Flows",
     #palette = "plasma", style = "quantile",
     palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    labels = c("0 to 1899", "1900 to 2199", "2200 to 2599", "2600 to 2899", "2900 to 3199", "3200 to 5600"),
     col = "model.all2009",
     lwd = "lwd",
     alpha = 0.7,
@@ -281,6 +285,7 @@ flow_bham_im <- tm_shape(lad)+tm_borders(lwd = 0.5)+
     title.col = "Predicted Flows",
     #palette = "plasma", style = "quantile",
     palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    labels = c("0 to 1899", "1900 to 2199", "2200 to 2599", "2600 to 2899", "2900 to 3199", "3200 to 5600"),
     col = "model.all2009",
     lwd = "lwd",
     alpha = 0.7,
@@ -297,6 +302,7 @@ flow_camd_ex <- tm_shape(lad)+tm_borders(lwd = 0.5)+
     title.col = "Predicted Flows",
     #palette = "plasma", style = "quantile",
     palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    labels = c("0 to 1899", "1900 to 2199", "2200 to 2599", "2600 to 2899", "2900 to 3199", "3200 to 5600"),
     col = "model.all2009",
     lwd = "lwd",
     alpha = 0.7,
@@ -313,6 +319,7 @@ flow_camd_im <- tm_shape(lad)+tm_borders(lwd = 0.5)+
     title.col = "Predicted Flows",
     #palette = "plasma", style = "quantile",
     palette = "plasma", breaks = c(0, 1900, 2200, 2600, 2900, 3200, 5600),
+    labels = c("0 to 1899", "1900 to 2199", "2200 to 2599", "2600 to 2899", "2900 to 3199", "3200 to 5600"),
     col = "model.all2009",
     lwd = "lwd",
     alpha = 0.7,
@@ -324,6 +331,6 @@ flow_camd_im <- tm_shape(lad)+tm_borders(lwd = 0.5)+
   tm_layout(legend.position = c("left", "top"), legend.text.size = 0.6)
 
 save <- tmap_arrange(flow_bham_ex, flow_bham_im, flow_camd_ex, flow_camd_im, ncol = 2)
-tmap_save(save, "Predictions.png", dpi = 450)
+tmap_save(save, "Predictions_updated.png", dpi = 450)
 ```
 
