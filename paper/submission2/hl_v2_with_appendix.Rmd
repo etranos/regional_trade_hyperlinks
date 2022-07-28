@@ -337,7 +337,7 @@ Current economic thinking advocates towards the use of RF as they tend to outper
 ordinary least squares in out-of-sample predictions even when using moderate size 
 training datasets and limited number of predictors [@mullainathan2017machine; @athey2019machine].
 All the above advocate towards utilising RF in this paper as we aim to do temporal out-of-sample 
-predictions of data, which are skewed and have outliers (see for Section [5](#sec:5)).
+predictions of data, which are skewed and have outliers (see for Section [5](#sec5)).
 
 <!-- random forests examples/review -->
 RF have been extensively utilised in answering regression research problems.
@@ -802,7 +802,7 @@ versus the observed flows of interregional trade are plotted in Figure \ref{pred
 Indeed, our models are able to make highly accurate temporal out of sample predictions for
 interregional trade in the UK. The R-squared only drops below $0.9$ in 2005 and
 2010 ($0.89$ and $0.63$), while it exceeds $0.95$ in 2002 and 2004^[As a comparison, 
-the Appendix provides the same results based on a LASSO estimator, which are inferior
+the [Appendix](#appendix) provides the same results based on a LASSO estimator, which are inferior
 to the ones acquired through RF.]. 
 The drop of the predictive capacity of our model for $2010$ can be attributed to
 the aftermath of the financial crisis and the use of data reflecting different business
@@ -1165,7 +1165,7 @@ and Birmingham
 <!-- (\ref{bham}) -->
 , the second biggest city in the UK. We present the import and export trade flows 
 for these LAD in Figure \ref{LAD_Maps}
-^[The Appendix provides the URL to interactive visualisations of the hypelink
+^[The [Appendix](#appendix) provides the URL to interactive visualisations of the hypelink
 flows at the NUTS2 level and the trade flow predictions for LADs]. 
 While both of these examples illustrate 
 the importance of distance in trade flows -- light colour lines are concentrated 
@@ -1301,11 +1301,11 @@ to shocks and to elaborate mitigating policies almost in real time.
 The authors would like to thank the editor and the anonynous reviewers for their
 constructive comments. The first author would also like to thank the QuSS Research
 Group at the School of Geographical Sciences at the University of Bristol and also
-the participants and the organisers of the Spatial Analytics + Data seminar series.
+the participants and the organisers of the Spatial analytics + data seminar series.
 
 # Author Biographies {-}
 
-EMMANOUIL TRANOS is a Professor in Quantitative Human Geography at the University of
+EMMANOUIL TRANOS is a Reader in Quantitative Human Geography at the University of
 Bristol in the UK and a fellow at the Alan Turing Institute. His research has been 
 exposing the spatial dimensions of digital technologies and the digital economy 
 from their early stages until today. E-mail: [e.tranos@bristol.ac.uk](mailto:e.tranos@bristol.ac.uk), Twitter: [\@EmmanouilTranos](https://twitter.com/EmmanouilTranos), Personal website: [etranos.info](https://etranos.info/).
@@ -1314,7 +1314,7 @@ from their early stages until today. E-mail: [e.tranos@bristol.ac.uk](mailto:e.t
 \noindent
 ANDRÉ CARRASCAL-INCERA is an Assistant Professor in the Department of Economics 
 at the University of Oviedo, Asturias, Spain.  
-His lines of research are related to the generation and distribution of income in multiregional systems and the development of economy-wide models at the regional level.
+His lines of research are related to the generation and distribution of income in multirregional systems and the development of economy-wide models at the regional level.
 E-mail: [carrascalandre@uniovi.es](mailto:carrascalandre@uniovi.es), 
 Twitter: [\@Andre_Carrascal](https://twitter.com/Andre_Carrascal),
 Personal website: [https://sites.google.com/view/andrecarrascalincera](https://sites.google.com/view/andrecarrascalincera).
@@ -1327,4 +1327,188 @@ focusing on the spatiotemporal patterns of urban shrinkage in China.
 E-mail: [gcw519@bham.ac.uk](mailto:gcw519@bham.ac.uk),
 Twitter: [\@GeorgeWGeog](https://twitter.com/GeorgeWGeog).
 
-# References
+<!-- # Endnotes {.unnumbered #endnotes} -->
+<!-- ```{js, echo=FALSE} -->
+<!-- $(document).ready(function() { -->
+<!--   $('.footnotes ol').appendTo('#endnotes'); -->
+<!--   $('.footnotes').remove(); -->
+<!-- }); -->
+<!-- ``` -->
+
+# Appendix {.unnumbered #appendix}
+
+## Online material  {-}
+
+An interactive map of the hyperlink data and the trade flow predictions between Local Authority Districts can be found at [etranos.info/regional_trade_hyperlinks/](https://etranos.info/regional_trade_hyperlinks/).
+
+## Out of sample $R^2$ for differnet sectors {-}
+
+```{r sectors, results = 'asis'}
+
+# fig.cap="\\label{prediction}Out of sample RMSE for differnet sectors"
+
+path.data <- paste0(path, "/data_inter/test_t2_sectors.RData")
+load(path.data)
+
+new.order <- (14:1)
+
+rf.year.all.metrics %>%
+  #round(2) %>%
+  filter(metric=="Rsquared") %>%
+  dplyr::select(-metric) %>% 
+  relocate(sector) %>%
+  `colnames<-`(gsub("X", "", names(.))) %>% 
+  slice(new.order) %>% 
+  mutate(sector = sub('s', '', sector)) %>% 
+  stargazer(summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+          notes = c("s1: Agriculture, s2: Mining, s3: Food, s4: Textiles, s5: Chemicals, s6: Equipment,", 
+          "s8: Manufacturing; s9: Construction, s10: Distribution, s11: Hospitality, " , 
+          "s12:	Transport, s13: Financial, s14: Real Estate, s15: Non-Market Services"),
+          title = "R-squared for t + 2 out of sample predictions per sector\\label{sector_R2}"
+            )
+```
+
+## Lasso regressions {-}
+
+```{r lasso, results = 'asis'}
+rm(list=ls())
+path <- find_rstudio_root_file()
+path.data <- paste(path, "/data_inter/test_t2_lasso.RData", sep = "")
+load(path.data)
+
+all.metrics <- rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  rownames_to_column("metric") %>%
+  pivot_longer(-metric, names_to = "year", values_to="value") %>%
+  pivot_wider(names_from = "metric", values_from = "value") %>%
+  mutate(year = gsub("X", "", year))
+
+# all.metrics %>% kable(format = "latex",
+#       digits = 3,
+#       position = "left")
+
+stargazer(all.metrics,
+          summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+#          notes = "",
+          title = "LASSO regressions: accuracy metrics in unseen data from t + 2\\label{accuracy_test}")
+
+```
+
+## Data wrangling process {-}
+
+```{r examples}
+path <- find_rstudio_root_file()
+example1 <- read_csv(paste0(path,"/data_inter/Examples/example1.csv"))
+example2 <- read_csv(paste0(path,"/data_inter/Examples/example2.csv"))
+example3 <- read_csv(paste0(path,"/data_inter/Examples/example3.csv"))
+example4 <- read_csv(paste0(path,"/data_inter/Examples/example4.csv"))
+```
+
+This section describes how geographic regions were added to the host-linkage dataset provided by JISC UK Web Domain Dataset^[https://data.webarchive.org.uk/opendata/ukwa.ds.2/geo/].
+The archived web data are from 2000-2010.
+The process begins combining the host-host links to a file containing unique postcodes for each host ending in co.uk.
+An example is provided below.
+
+```{r example1, results = 'asis'}
+example1 %>% tidyr::separate(col = 3,
+                      sep = "\t",
+                      into = c("destination",
+                               "links")) %>% 
+  stargazer(summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+#          notes = "",
+          title = "Host-linkage file\\label{host_link}")
+```
+
+```{r example2, results = 'asis'}
+example2 %>% 
+  stargazer(summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+#          notes = "",
+          title = "Websites with unique postcodes\\label{unique}")
+```
+
+The two data frames were joined by matching the variable `domain`.
+If an origin or destination was found in in the postcode data, it was added to the file.
+Host-links without a postcode were dropped.
+This leaves with host, domain and postcode for origins and destinations  and the number of links between.
+This is shown below.
+
+```{r example3, results = 'asis'}
+example3 %>% dplyr::select(-X1) %>% 
+  filter(!row_number() %in% 4) %>% 
+  stargazer(summary = F,
+          font.size = "tiny",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+#          notes = "",
+          title = "Combined host and postcode data\\label{combined}")
+```
+
+The next step was to remove websites that linked to themselves (e.g. the first row above).
+These data were not of interest as we are looking for links between different websites.
+Therefore, if origin host and destination host were the same, they were dropped.
+We now have host-to-host links with the associated unique postcodes and the number of links.
+
+The next step was to aggregate to the NUTS2 regions.
+This was done by using a postcode to NUTS2 (2010 version) lookup file combined with the above created data.
+The data was then aggregated summing all data with the same origin NUTS and destination NUTS codes.
+We are then left with our NUTS2-to-NUTS2 links.
+The same process was done for every year 2000-2010.
+
+```{r example4, results = 'asis'}
+example4 %>% stargazer(summary = F,
+          font.size = "footnotesize",
+          type = "latex",
+          #type = "text",
+          header = F,
+          digit.separator = ",",
+          digit.separate = c(3,3),
+          rownames = F,
+          no.space=TRUE,
+          column.sep.width = "0pt",
+#          notes = "",
+          title = "NUTS2 level data\\label{nuts2}")
+```
+
+# References {-}

@@ -1,7 +1,7 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2020.8.26)  5 JUL 2022 09:53
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2020.8.26)  26 JUL 2022 09:29
 entering extended mode
-**./appenidix.tex
-(appenidix.tex
+**./appendix.tex
+(appendix.tex
 LaTeX2e <2020-02-02> patch level 5
 L3 programming layer <2020-08-07> (C:\Users\nw19521\AppData\Local\Programs\MiKT
 eX\tex/latex\base\article.cls
@@ -382,7 +382,7 @@ dfmode.def
 File: l3backend-pdfmode.def 2020-08-07 L3 backend support: PDF mode
 \l__kernel_color_stack_int=\count272
 \l__pdf_internal_box=\box47
-) (appenidix.aux
+) (appendix.aux
 
 LaTeX Warning: Label `' multiply defined.
 
@@ -399,7 +399,7 @@ LaTeX Warning: Label `' multiply defined.
 LaTeX Warning: Label `' multiply defined.
 
 )
-\openout1 = `appenidix.aux'.
+\openout1 = `appendix.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 69.
 LaTeX Font Info:    ... okay on input line 69.
@@ -566,14 +566,10 @@ LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
 (C:\Users\nw19521\AppData\Local\Programs\MiKTeX\tex/latex\lm\t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-Overfull \hbox (49.51093pt too wide) in paragraph at lines 193--204
- [][] 
- []
-
 Package atveryend Info: Empty hook `BeforeClearDocument' on input line 238.
 [2]
 Package atveryend Info: Empty hook `AfterLastShipout' on input line 238.
-(appenidix.aux)
+(appendix.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 238.
 Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 238.
 
@@ -582,12 +578,12 @@ LaTeX Warning: There were multiply-defined labels.
  ) 
 Here is how much of TeX's memory you used:
  12934 strings out of 481181
- 192273 string characters out of 2903886
- 491764 words of memory out of 3000000
+ 192262 string characters out of 2903886
+ 491762 words of memory out of 3000000
  28263 multiletter control sequences out of 15000+200000
  585418 words of font info for 90 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 50i,9n,42p,810b,381s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 50i,9n,42p,809b,381s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}
 {C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.en
 c}{C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}
@@ -602,7 +598,7 @@ r6.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
 r7.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
 r8.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lm
 tt10.pfb>
-Output written on appenidix.pdf (2 pages, 216158 bytes).
+Output written on appendix.pdf (2 pages, 216150 bytes).
 PDF statistics:
  94 PDF objects out of 1000 (max. 8388607)
  18 named destinations out of 1000 (max. 500000)

@@ -1,7 +1,9 @@
 ---
 title: "Appendix"
 author: ""
-output: pdf_document
+output: 
+  pdf_document: 
+    keep_tex: yes
 ---
 
 ```{r setup, echo = F, message = F, warning = F}
