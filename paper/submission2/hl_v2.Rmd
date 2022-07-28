@@ -1251,8 +1251,8 @@ stargazer(camd,
 
 
 ```{r, echo=FALSE, message=FALSE, fig.cap="\\label{LAD_Maps}Local Authority Districts trade predicitions: top left- Birmingham Exports, top right - Birmingham imports, bottom left - Camden exports, bottom right - Camden imports", fig.height=15, fig.width=10}
-
-knitr::include_graphics("figures/Predictions.png")
+#test
+knitr::include_graphics("figures/Predictions2_updated.png")
 ```
 
 
