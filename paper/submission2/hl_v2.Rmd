@@ -691,7 +691,7 @@ stargazer(type = "latex",
                              "Population density (Hab. per $km^2$)"))
 ```
 
-```{r echo=FALSE, message=FALSE, fig.cap="\\label{Flow_maps}Distribution of Trade and Hyperlink flow data", fig.height=15, fig.width=10}
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{Flow_maps} Interregional trade and hyperlink flows", fig.height=15, fig.width=10}
 
 knitr::include_graphics("figures/flow_maps.png")
 ```
@@ -886,7 +886,7 @@ stargazer(all.metrics,
           title = "Accuracy metrics  for predicting unseen data from t + 2\\label{accuracy_test}")
 ```
 
-```{r echo=FALSE, results= 'markup', message=FALSE, fig.cap="\\label{prediction}Predicted vs. observed interregional trade by year"}
+```{r echo=FALSE, results= 'markup', message=FALSE, fig.cap="\\label{prediction}Predicted vs. observed interregional trade (in £100,000s) by year"}
 
 # predicted vs. observed
 
@@ -1116,7 +1116,7 @@ stargazer(all.metrics,
           title = "Accuracy metrics in unseen data with multiple postcodes from t + 2\\label{accuracy_test_multi_pc}")
 ```
 
-```{r echo=FALSE, results= 'markup', message=FALSE, fig.cap="\\label{prediction_multi_pc}Predicted vs. observed interregional trade by year for multiple postcodes"}
+```{r echo=FALSE, results= 'markup', message=FALSE, fig.cap="\\label{prediction_multi_pc}Predicted vs. observed interregional trade (in £100,000s) by year for websites with multiple postcodes"}
 
 # predicted vs. observed
 
@@ -1250,7 +1250,7 @@ stargazer(camd,
 ```
 
 
-```{r, echo=FALSE, message=FALSE, fig.cap="\\label{LAD_Maps}Local Authority Districts trade predicitions: top left- Birmingham Exports, top right - Birmingham imports, bottom left - Camden exports, bottom right - Camden imports", fig.height=15, fig.width=10}
+```{r, echo=FALSE, message=FALSE, fig.cap="\\label{LAD_Maps}Local Authority Districts trade flow predicitions (in  £100,000s): top left- Birmingham Exports, top right - Birmingham imports, bottom left - Camden exports, bottom right - Camden imports", fig.height=15, fig.width=10}
 #test
 knitr::include_graphics("figures/Predictions2_updated.png")
 ```

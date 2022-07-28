@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2020.8.26)  26 JUL 2022 10:07
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (MiKTeX 2.9.7250 64-bit) (preloaded format=pdflatex 2020.8.26)  28 JUL 2022 09:01
 entering extended mode
 **./hl_v2.tex
 (hl_v2.tex
@@ -757,19 +757,19 @@ l.870
 l.870 
        <./hl_v2_files/figure-latex/unnamed-chunk-3-1.pdf> <./hl_v2_files/figure
 -latex/unnamed-chunk-7-1.pdf>]
-<figures/sector_rsquared.png, id=602, 505.89pt x 505.89pt>
+<figures/sector_rsquared.png, id=603, 505.89pt x 505.89pt>
 File: figures/sector_rsquared.png Graphic file (type png)
 <use figures/sector_rsquared.png>
 Package pdftex.def Info: figures/sector_rsquared.png  used on input line 872.
 (pdftex.def)             Requested size: 408.0pt x 408.00865pt.
-<hl_v2_files/figure-latex/unnamed-chunk-10-1.pdf, id=612, 469.755pt x 325.215pt
+<hl_v2_files/figure-latex/unnamed-chunk-10-1.pdf, id=613, 469.755pt x 325.215pt
 >
 File: hl_v2_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf)
 <use hl_v2_files/figure-latex/unnamed-chunk-10-1.pdf>
 Package pdftex.def Info: hl_v2_files/figure-latex/unnamed-chunk-10-1.pdf  used 
 on input line 904.
 (pdftex.def)             Requested size: 408.0pt x 282.46333pt.
-<hl_v2_files/figure-latex/unnamed-chunk-12-1.pdf, id=616, 469.755pt x 325.215pt
+<hl_v2_files/figure-latex/unnamed-chunk-12-1.pdf, id=617, 469.755pt x 325.215pt
 >
 File: hl_v2_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
 <use hl_v2_files/figure-latex/unnamed-chunk-12-1.pdf>
@@ -803,10 +803,11 @@ l.971
 l.971 
        <./hl_v2_files/figure-latex/unnamed-chunk-10-1.pdf> <./hl_v2_files/figur
 e-latex/unnamed-chunk-12-1.pdf>]
-<figures/Predictions.png, id=647, 505.89pt x 505.89pt>
-File: figures/Predictions.png Graphic file (type png)
-<use figures/Predictions.png>
-Package pdftex.def Info: figures/Predictions.png  used on input line 996.
+<figures/Predictions2_updated.png, id=648, 505.89pt x 505.89pt>
+File: figures/Predictions2_updated.png Graphic file (type png)
+<use figures/Predictions2_updated.png>
+Package pdftex.def Info: figures/Predictions2_updated.png  used on input line 9
+96.
 (pdftex.def)             Requested size: 408.0pt x 408.00865pt.
 
 Overfull \vbox (1.77919pt too high) has occurred while \output is active []
@@ -817,8 +818,8 @@ e.7}) has been already used, duplicate ignored
 \AtBegShi@Output ...ipout \box \AtBeginShipoutBox 
                                                   \fi \fi 
 l.1044 
-        <./figures/Predictions.png (PNG copy)>] (hl_v2.bbl [20] [21] [22] [23] 
-[24]
+        <./figures/Predictions2_updated.png (PNG copy)>] (hl_v2.bbl [20] [21] [
+22] [23] [24]
 Underfull \hbox (badness 1286) in paragraph at lines 516--519
 []\OT1/cmr/m/n/10 Thelwall, Mike, Li-wen Vaughan, and Lennart Bjorneborn. 2005
 . ``We-bo-met-rics.'' \OT1/cmr/m/it/10 An-
@@ -844,38 +845,40 @@ LaTeX Warning: There were multiply-defined labels.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1095.
  ) 
 Here is how much of TeX's memory you used:
- 10349 strings out of 481181
- 156788 string characters out of 2903886
- 439842 words of memory out of 3000000
- 25518 multiletter control sequences out of 15000+200000
- 548498 words of font info for 82 fonts, out of 3000000 for 9000
+ 10351 strings out of 481181
+ 156881 string characters out of 2903886
+ 439964 words of memory out of 3000000
+ 25519 multiletter control sequences out of 15000+200000
+ 548835 words of font info for 83 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  52i,12n,41p,495b,661s stack positions out of 5000i,500n,10000p,200000b,50000s
-<C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/c
-m/cmbx10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/amsfonts/cm/cmbx12.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/amsfonts/cm/cmbx8.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Users/nw19521/AppData/Local/Pro
-grams/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/nw19521/AppDat
-a/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/nw1
-9521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:
-/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmm
-i8.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfo
-nts/cm/cmmi9.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/pu
-blic/amsfonts/cm/cmr10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/font
-s/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/nw19521/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/nw19521/AppData/Local/Pr
-ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/nw19521/AppData
-/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/nw19
-521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/
-Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy
-8.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
-ts/cm/cmti10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/pu
-blic/amsfonts/cm/cmtt10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/amsfonts/cm/cmtt8.pfb>
-Output written on hl_v2.pdf (26 pages, 3494277 bytes).
+{C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/cm-super/cm-super-ts1.enc}<C:/Us
+ers/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10
+.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfont
+s/cm/cmbx12.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/pub
+lic/amsfonts/cm/cmbx8.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts
+/type1/public/amsfonts/cm/cmbx9.pfb><C:/Users/nw19521/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/nw19521/AppData/Local/
+Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/nw19521/App
+Data/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/n
+w19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><
+C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/c
+mmi9.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/ams
+fonts/cm/cmr10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/
+public/amsfonts/cm/cmr6.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fon
+ts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/nw19521/AppData/Local/Programs/M
+iKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/nw19521/AppData/Local/P
+rograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/nw19521/AppD
+ata/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/nw
+19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C
+:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
+ti10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1/public/ams
+fonts/cm/cmtt10.pfb><C:/Users/nw19521/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/amsfonts/cm/cmtt8.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/c
+m-super/sfrm0800.pfb>
+Output written on hl_v2.pdf (26 pages, 3510711 bytes).
 PDF statistics:
- 810 PDF objects out of 1000 (max. 8388607)
+ 815 PDF objects out of 1000 (max. 8388607)
  187 named destinations out of 1000 (max. 500000)
  108 words of extra memory for PDF output out of 10000 (max. 10000000)
 
