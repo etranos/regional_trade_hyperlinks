@@ -331,6 +331,6 @@ flow_camd_im <- tm_shape(lad)+tm_borders(lwd = 0.5)+
   tm_layout(legend.position = c("left", "top"), legend.text.size = 0.6)
 
 save <- tmap_arrange(flow_bham_ex, flow_bham_im, flow_camd_ex, flow_camd_im, ncol = 2)
-tmap_save(save, "Predictions_updated.png", dpi = 450)
+tmap_save(save, "Predictions.png", dpi = 450)
 ```
 

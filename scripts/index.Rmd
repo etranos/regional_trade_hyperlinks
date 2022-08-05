@@ -14,7 +14,7 @@ knit: (function(inputFile, encoding) {
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis')
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
-#devtools::install_github("dmurdoch/leaflet@crosstalk4", force = T) # special edit of package for maps install first
+devtools::install_github("dmurdoch/leaflet@crosstalk4", force = T) # special edit of package for maps install first
 
 library(tidyverse)
 library(gridExtra)
@@ -88,6 +88,8 @@ flows$Year_format <- as.Date(as.character(Mapping_df$Year), format = "%Y")# no c
 flows$Origin <- Mapping_df$Origin
 flows$Destinaton <- Mapping_df$Destination
 
+names(flows) <- c("ID", "Hyperlinks", "hl_log", "Trade", "origins", "destinations", "Year", "Year_format", "Origin", "Destination")
+
 # create crosstalk sharedata
 sd_map <- SharedData$new(flows)
 sd_df <- SharedData$new(as.data.frame(flows@data), group = sd_map $groupName())
@@ -96,7 +98,7 @@ pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
 
 filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
 
-filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~hl, step=50, max = 40000, width = 600)
+filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~Hyperlinks, step=50, max = 40000, width = 600)
 
 
 #map
@@ -117,6 +119,7 @@ Column {data-width=400}
 
 ```{r}
 filter_select("Origin", "Origin", sd_df, ~Origin)
+filter_select("Destination", "Destination", sd_df, ~Destination)
 
 #datatable
 datatable(sd_df, 
@@ -128,8 +131,9 @@ datatable(sd_df,
           options=list(deferRender=TRUE, 
                        scrollY=400,  #was 300
                        scroller=TRUE,
+                       sDom  = '<"top">lrt<"bottom">ip',
                        autoWidth = TRUE,
-                       columnDefs = list(list(list(visible=FALSE, targets=c(0,2,4,5,7), width='90'))))) # '_all' for all variables
+                       columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5,7), width='90')))) # '_all' for all variables
 ```
 
 <br>
@@ -191,6 +195,7 @@ flows_lad$destinations <- lad_prediction$dest
 flows_lad$Origin <- lad_prediction$Origin
 flows_lad$Destinaton <- lad_prediction$Destination
 
+names(flows_lad) <- c("ID", "Predicted Trade", "prediction_log", "Hyperlinks", "origins", "destinations", "Origin", "Destination")
 
 # create crosstalk sharedata
 lad_map <- SharedData$new(flows_lad)
@@ -198,7 +203,7 @@ lad_df <- SharedData$new(as.data.frame(flows_lad@data), group = lad_map $groupNa
 
 pal2 <- colorBin(palette = "plasma", domain=c(6,9), bins = 10, pretty = FALSE)
 
-filter_slider("Prediction", "£100k in 2010", lad_df, column=~prediction, step=50, max = 64000, width = 600)
+filter_slider("Prediction", "£100k in 2010", lad_df, column=~`Predicted Trade`, step=50, max = 64000, width = 600)
 
 #maps
 leaflet(options = leafletOptions(minZoom = 5)) %>%
@@ -217,10 +222,21 @@ Column {data-width=400}
 #filters
 
 filter_select("Origin", "Origin", lad_df, ~Origin)
+filter_select("Destination", "Destination", lad_df, ~Destination)
+
 #datatable
-datatable(lad_df, extensions="Scroller", style="bootstrap", class="compact",rownames= FALSE,
-          width="100%", options=list(deferRender=TRUE, scrollY=300,
-                                     scroller=TRUE, columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5)))))
+datatable(lad_df,
+          extensions="Scroller", 
+          style="bootstrap",
+          class="compact",
+          rownames= FALSE,
+          width="100%", 
+          options=list(deferRender=TRUE, 
+                       scrollY=300, 
+                       sDom  = '<"top">lrt<"bottom">ip',
+                       scroller=TRUE,
+                       autoWidth = TRUE,
+                       columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5)))))
 ```
 
 <br>
