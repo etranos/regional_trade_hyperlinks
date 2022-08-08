@@ -14,7 +14,8 @@ knit: (function(inputFile, encoding) {
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis')
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
-devtools::install_github("dmurdoch/leaflet@crosstalk4", force = T) # special edit of package for maps install first
+#Install the below if not installed already
+#devtools::install_github("dmurdoch/leaflet@crosstalk4", force = T) # special edit of package for maps install first
 
 library(tidyverse)
 library(gridExtra)
@@ -96,11 +97,6 @@ sd_df <- SharedData$new(as.data.frame(flows@data), group = sd_map $groupName())
 
 pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
 
-filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
-
-filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~Hyperlinks, step=50, max = 40000, width = 600)
-
-
 #map
 leaflet(options = leafletOptions(minZoom = 5)) %>%
   addProviderTiles("CartoDB.Positron") %>%
@@ -110,17 +106,15 @@ leaflet(options = leafletOptions(minZoom = 5)) %>%
                 , lat2 = 61 ) %>%
   addPolylines(data = sd_map, weight = ~hl_log, color = ~pal(hl_log), label = ~ID)
 
-
-
+#year and hyperlink volume sliders
+filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
+filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~Hyperlinks, step=50, max = 40000, width = 600)
 ```
 
 Column {data-width=400}
 -------------------------------------
 
 ```{r}
-filter_select("Origin", "Origin", sd_df, ~Origin)
-filter_select("Destination", "Destination", sd_df, ~Destination)
-
 #datatable
 datatable(sd_df, 
           extensions="Scroller", 
@@ -129,11 +123,14 @@ datatable(sd_df,
           width="100%", 
           rownames= FALSE,
           options=list(deferRender=TRUE, 
-                       scrollY=400,  #was 300
+                       scrollY=450,  #was 300
                        scroller=TRUE,
                        sDom  = '<"top">lrt<"bottom">ip',
                        autoWidth = TRUE,
                        columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5,7), width='90')))) # '_all' for all variables
+
+filter_select("Origin", "Origin", sd_df, ~Origin)
+filter_select("Destination", "Destination", sd_df, ~Destination)
 ```
 
 <br>
@@ -158,7 +155,9 @@ load(path.data)
 # I need to repeat `find_rstudio_root_file()` otherwise it turns back to .Rmd floder
 path <- find_rstudio_root_file()
 path.predictions <- paste0(path, "/data_inter/lad_prediction.csv")
-lad_prediction <- read_csv(path.predictions, col_types = cols(X1 = col_skip()))
+
+#lad_prediction <- read_csv(path.predictions, col_types = cols(X1 = col_skip()))
+lad_prediction <- read.csv(path.predictions)
 
 Lad_df <- lad_prediction %>% 
   dplyr::select(orig, dest, id, model.all2009, hl, year, lad.orig, lad.dest)
@@ -177,10 +176,8 @@ lad_prediction<- merge(lad_prediction, centroids_LA, by.x="dest", by.y="lad18cd"
 lad_prediction <- lad_prediction %>%
   filter(lad_prediction$model.all2009>2800) # remove 75% of bottom flows so it runs
 
-
 # DF for maps
 names(lad_prediction) <- c("dest", "orig", "id_flow", "prediction_2009", "hl", "year", "Origin","Destination", "lng_orig", "lat_orig","lng_dest", "lat_dest")
-
 ```
 
 ```{r LAD plot}
@@ -203,9 +200,7 @@ lad_df <- SharedData$new(as.data.frame(flows_lad@data), group = lad_map $groupNa
 
 pal2 <- colorBin(palette = "plasma", domain=c(6,9), bins = 10, pretty = FALSE)
 
-filter_slider("Prediction", "£100k in 2010", lad_df, column=~`Predicted Trade`, step=50, max = 64000, width = 600)
-
-#maps
+#map
 leaflet(options = leafletOptions(minZoom = 5)) %>%
   addProviderTiles("CartoDB.Positron") %>%
   setMaxBounds( lng1 = -8
@@ -213,17 +208,15 @@ leaflet(options = leafletOptions(minZoom = 5)) %>%
                 , lng2 = 2
                 , lat2 = 61 ) %>%
   addPolylines(data = lad_map, weight = ~prediction_log/7, color = ~pal2(prediction_log), label = ~ID)
+
+# slider
+filter_slider("Prediction", "£100k in 2010", lad_df, column=~`Predicted Trade`, step=50, max = 64000, width = 600)
 ```
 
 Column {data-width=400}
 -------------------------------------
 
 ```{r LAD sliders, echo=FALSE}
-#filters
-
-filter_select("Origin", "Origin", lad_df, ~Origin)
-filter_select("Destination", "Destination", lad_df, ~Destination)
-
 #datatable
 datatable(lad_df,
           extensions="Scroller", 
@@ -232,11 +225,15 @@ datatable(lad_df,
           rownames= FALSE,
           width="100%", 
           options=list(deferRender=TRUE, 
-                       scrollY=300, 
+                       scrollY=450, 
                        sDom  = '<"top">lrt<"bottom">ip',
                        scroller=TRUE,
                        autoWidth = TRUE,
                        columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5)))))
+
+#filters
+filter_select("Origin", "Origin", lad_df, ~Origin)
+filter_select("Destination", "Destination", lad_df, ~Destination)
 ```
 
 <br>
