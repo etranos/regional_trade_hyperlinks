@@ -1,6 +1,6 @@
 ---
 title: 'Using the web to predict regional trade flows: data extraction, modelling, and validation.'
-output: 
+output:
   flexdashboard::flex_dashboard:
     vertical_layout: fill
     orientation: columns
@@ -44,7 +44,7 @@ path.data <- paste0(path, "/data_inter/test_t2.RData") #where total and LAD is l
 load(path.data)
 #total <- read_csv("total.csv", col_types = cols(X1 = col_skip())) # if local
 
-Mapping_df <- total %>% 
+Mapping_df <- total %>%
   dplyr::select(orig, dest, id, io,hl, central.orig, central.dest, year)
 
 # I need to repeat `find_rstudio_root_file()` otherwise it turns back to .Rmd floder
@@ -54,10 +54,10 @@ shp <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "NUTS_RG_01M_2010
 
 #shp <- readOGR(dsn = paste0(path, "/Raw_data/Maps"), layer = "NUTS_RG_01M_2010_4326_LEVL_2")
 
-shp_UK <- subset(shp, NUTS_ID %in% Mapping_df$orig) 
+shp_UK <- subset(shp, NUTS_ID %in% Mapping_df$orig)
 centroids <- SpatialPointsDataFrame(coordinates(shp), data = as(shp, "data.frame")[c("NUTS_ID")])
 #merge data for origins and destinations
-Mapping_df <- merge(Mapping_df, centroids, by.x="orig", by.y="NUTS_ID") 
+Mapping_df <- merge(Mapping_df, centroids, by.x="orig", by.y="NUTS_ID")
 Mapping_df <- merge(Mapping_df, centroids, by.x="dest", by.y="NUTS_ID")
 Names <- shp_UK@data[,c(2,4)]
 Mapping_df <- merge(Mapping_df, Names, by.x="dest", by.y = "NUTS_ID")
@@ -65,7 +65,7 @@ Mapping_df <- merge(Mapping_df, Names, by.x="orig", by.y = "NUTS_ID")
 names(Mapping_df) <- c("orig", "dest", "id_flow", "io", "hl", "central.orig", "central.dest","Year", "lng_orig", "lat_orig","lng_dest", "lat_dest", "Destination", "Origin")
 Mapping_df <- Mapping_df[,c(1,2,3,4,5,6,7,8,11,12,9,10,13,14)]
 
-#filter for flows 
+#filter for flows
 Mapping_df <- Mapping_df %>%
   filter(Mapping_df$hl>149)  
 ```
@@ -97,6 +97,10 @@ sd_df <- SharedData$new(as.data.frame(flows@data), group = sd_map $groupName())
 
 pal <- colorBin(palette = "plasma", domain=c(0,1.32), bins = 10, pretty = TRUE)
 
+#year and hyperlink volume sliders
+filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
+filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~Hyperlinks, step=50, max = 40000, width = 600)
+
 #map
 leaflet(options = leafletOptions(minZoom = 5)) %>%
   addProviderTiles("CartoDB.Positron") %>%
@@ -105,39 +109,36 @@ leaflet(options = leafletOptions(minZoom = 5)) %>%
                 , lng2 = 2
                 , lat2 = 61 ) %>%
   addPolylines(data = sd_map, weight = ~hl_log, color = ~pal(hl_log), label = ~ID)
-
-#year and hyperlink volume sliders
-filter_slider("Year", "Year", sd_df, column=~Year_format, step=1, width = 600, timeFormat = "%Y")
-filter_slider("Hyperlinks", "Hyperlinks", sd_df, column=~Hyperlinks, step=50, max = 40000, width = 600)
 ```
 
 Column {data-width=400}
 -------------------------------------
 
 ```{r}
+filter_select("Origin", "Origin", sd_df, ~Origin)
+filter_select("Destination", "Destination", sd_df, ~Destination)
+
 #datatable
-datatable(sd_df, 
-          extensions="Scroller", 
-          style="bootstrap", 
-          class="compact", 
-          width="100%", 
+datatable(sd_df,
+          extensions="Scroller",
+          style="bootstrap",
+          class="compact",
+          width="100%",
           rownames= FALSE,
-          options=list(deferRender=TRUE, 
-                       scrollY=450,  #was 300
+          options=list(deferRender=TRUE,
+                       scrollY=350,  #was 300
                        scroller=TRUE,
                        sDom  = '<"top">lrt<"bottom">ip',
                        autoWidth = TRUE,
                        columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5,7), width='90')))) # '_all' for all variables
 
-filter_select("Origin", "Origin", sd_df, ~Origin)
-filter_select("Destination", "Destination", sd_df, ~Destination)
 ```
 
 <br>
 
-Tranos, E., A. Carrascal-Incera and G. Willis (2022) Using the web to predict regional trade flows: data extraction, modelling, and validation, *Annals of the AAG*. In press. [Link.]()
+<font size="+1.5">Tranos, E., A. Carrascal-Incera and G. Willis (2022) Using the web to predict regional trade flows: data extraction, modelling, and validation, *Annals of the AAG*. In press. [Link.](https://doi.org/10.1080/24694452.2022.2109577)</font>
 
-<small>NUTS2 pairs with < 150 hyperlinks are excluded from the visualisations.</small> 
+<small>NUTS2 pairs with < 150 hyperlinks are excluded from the visualisations.</small>
 
 
 Predicted trade flows, LADs
@@ -155,15 +156,13 @@ load(path.data)
 # I need to repeat `find_rstudio_root_file()` otherwise it turns back to .Rmd floder
 path <- find_rstudio_root_file()
 path.predictions <- paste0(path, "/data_inter/lad_prediction.csv")
+lad_prediction <- read_csv(path.predictions, col_types = cols(X1 = col_skip()))
 
-#lad_prediction <- read_csv(path.predictions, col_types = cols(X1 = col_skip()))
-lad_prediction <- read.csv(path.predictions)
-
-Lad_df <- lad_prediction %>% 
+Lad_df <- lad_prediction %>%
   dplyr::select(orig, dest, id, model.all2009, hl, year, lad.orig, lad.dest)
 
 #shapefile and centroids
-shp_LA <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC", 
+shp_LA <- readOGR(dsn = paste0(path, "/data_inter/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC",
                   verbose=FALSE)
 #shp_LA <- readOGR(dsn = paste0(path, "/Raw_data/Maps"), layer = "Local_Authority_Districts__December_2018__Boundaries_UK_BFC")
 shp_UK_LA <- subset(shp_LA, lad18cd %in% Mapping_df$orig)
@@ -176,8 +175,10 @@ lad_prediction<- merge(lad_prediction, centroids_LA, by.x="dest", by.y="lad18cd"
 lad_prediction <- lad_prediction %>%
   filter(lad_prediction$model.all2009>2800) # remove 75% of bottom flows so it runs
 
+
 # DF for maps
 names(lad_prediction) <- c("dest", "orig", "id_flow", "prediction_2009", "hl", "year", "Origin","Destination", "lng_orig", "lat_orig","lng_dest", "lat_dest")
+
 ```
 
 ```{r LAD plot}
@@ -200,7 +201,10 @@ lad_df <- SharedData$new(as.data.frame(flows_lad@data), group = lad_map $groupNa
 
 pal2 <- colorBin(palette = "plasma", domain=c(6,9), bins = 10, pretty = FALSE)
 
-#map
+# slider
+filter_slider("Prediction", "£100k in 2010", lad_df, column=~`Predicted Trade`, step=50, max = 64000, width = 600)
+
+#maps
 leaflet(options = leafletOptions(minZoom = 5)) %>%
   addProviderTiles("CartoDB.Positron") %>%
   setMaxBounds( lng1 = -8
@@ -208,36 +212,34 @@ leaflet(options = leafletOptions(minZoom = 5)) %>%
                 , lng2 = 2
                 , lat2 = 61 ) %>%
   addPolylines(data = lad_map, weight = ~prediction_log/7, color = ~pal2(prediction_log), label = ~ID)
-
-# slider
-filter_slider("Prediction", "£100k in 2010", lad_df, column=~`Predicted Trade`, step=50, max = 64000, width = 600)
 ```
 
 Column {data-width=400}
 -------------------------------------
 
 ```{r LAD sliders, echo=FALSE}
+#filters
+
+filter_select("Origin", "Origin", lad_df, ~Origin)
+filter_select("Destination", "Destination", lad_df, ~Destination)
+
 #datatable
 datatable(lad_df,
-          extensions="Scroller", 
+          extensions="Scroller",
           style="bootstrap",
           class="compact",
           rownames= FALSE,
-          width="100%", 
-          options=list(deferRender=TRUE, 
-                       scrollY=450, 
+          width="100%",
+          options=list(deferRender=TRUE,
+                       scrollY=350,
                        sDom  = '<"top">lrt<"bottom">ip',
                        scroller=TRUE,
                        autoWidth = TRUE,
                        columnDefs = list(list(visible=FALSE, targets=c(0,2,4,5)))))
-
-#filters
-filter_select("Origin", "Origin", lad_df, ~Origin)
-filter_select("Destination", "Destination", lad_df, ~Destination)
 ```
 
 <br>
 
-Tranos, E., A. Carrascal-Incera and G. Willis (2022) Using the web to predict regional trade flows: data extraction, modelling, and validation, *Annals of the AAG*. In press. [Link.]()
+<font size="+1.5">Tranos, E., A. Carrascal-Incera and G. Willis (2022) Using the web to predict regional trade flows: data extraction, modelling, and validation, *Annals of the AAG*. In press. [Link.](https://doi.org/10.1080/24694452.2022.2109577)</font>
 
 <small>Only the top *x%* of predicted trade flows are included in the visualisations.</small>
