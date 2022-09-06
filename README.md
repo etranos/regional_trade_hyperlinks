@@ -3,7 +3,7 @@
 [Emmanouil Tranos](https://etranos.info/)<sup>1</sup>\*, [Andre Carrascal Incera](https://sites.google.com/view/andrecarrascalincera/home)<sup>2</sup>
 and George Willis<sup>3</sup>.
 
-<sup>1</sup>University of Bristol and The Alan Turing Institute, [e.tranos@bristol.ac.uk](mailto:e.tranos@bristol.ac.uk), [@emmanouiltranos](https://twitter.com/emmanouiltranos)
+<sup>1</sup>University of Bristol and The Alan Turing Institute, [e.tranos@bristol.ac.uk](mailto:e.tranos@bristol.ac.uk), [@EmmanouilTranos](https://twitter.com/emmanouiltranos)
 
 <sup>2</sup>University of Oviedo, [carrascalandre@uniovi.es](mailto:carrascalandre@uniovi.es), [@Andre_Carrascal](https://twitter.com/Andre_Carrascal)
 
@@ -38,9 +38,6 @@ Despite the importance of interregional trade for building effective regional ec
 
 
 ## Reproduce the analysis
-
-
-path.2000 <- "C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/all2000couk.csv"
 
 - `/scrips/io_data.Rmd`, `/scrips/io_data_sectors.Rmd` and
 `/scrips/io_data_multi_pc.Rmd` prepare the data that is used for the
