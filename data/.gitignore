@@ -1,3 +1,6 @@
-*
-*/
+old/*
+EU data/*
+spatial/ref-nuts-2006-10m.geojson.zip
+spatial/ref-nuts-2003-20m.geojson.zip
+help_nuts_versions.txt
 !.gitignore

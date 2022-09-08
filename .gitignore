@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 old/*
+acm_paper/*
+outputs/*

@@ -969,7 +969,6 @@ Real Estate and Leasing is $79%$ non tradable, among other results they obtain.
 ```{r echo=FALSE, out.width = "100%",fig.cap="\\label{rsquared_sectors}R-squared for t + 2 out of sample predictions per sector.\\\\\\hspace{\\textwidth}\\tiny Notes: s1: Agriculture, s2: Mining, s3: Food, s4: Textiles, s5: Chemicals, s6: Equipment, s8: Manufacturing; s9: Construction, s10: Distribution, s11: Hospitality, s12:	Transport, s13: Financial, s14: Real Estate, s15: Non-Market Services."}
 
 # sectors
-out.path <- paste0(path, "/paper/sector_rsquared.png")
 img1_path <- "figures/sector_rsquared.png"
 include_graphics(img1_path)
 ```

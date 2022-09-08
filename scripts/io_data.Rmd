@@ -195,7 +195,6 @@ names(total)[6] <- "hl"
 ## Distance
 
 I calculate the distance between NUTS2 centroids.
-**TODO**: check if it is spherical distance 
 
 ```{r echo=FALSE, results= 'hide', message=FALSE, warning=FALSE}
 nuts.path <- paste0(path, "/data/spatial")

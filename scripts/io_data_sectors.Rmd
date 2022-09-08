@@ -239,7 +239,6 @@ total <- merge(total.hl.melt, sectors, by = c("id", "year"))
 ## Distance
 
 I calculate the distance between NUTS2 centroids.
-**TODO**: check if it is spherical distance 
 
 ```{r echo=FALSE, results= 'hide', message=FALSE, warning=FALSE}
 nuts.path <- paste0(path, "/data/spatial")

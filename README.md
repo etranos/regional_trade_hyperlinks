@@ -43,8 +43,15 @@ Despite the importance of interregional trade for building effective regional ec
 `/scrips/io_data_multi_pc.Rmd` prepare the data that is used for the
 modelling. They prepare the data for the base models, the sectoral models 
 and the models based on the websites with multiple postcodes. 
-The appendix of the paper includes a description of the web data creation
+The appendix of the paper includes a detailed description of the web data creation
 process.
+
+- The data can be found under the `/scripts/data/` folder. The two main data sets 
+used for the analysis are the following:
+
+    - the [JISC UK Web Domain Dataset (1996-2013)](https://data.webarchive.org.uk/opendata/ukwa.ds.2/), which can be found in the `/data/NUTS210_hyperlinks/weighted` folder, and 
+
+    - the [PBL EUREGIO database (2000-2010)](https://data.europa.eu/data/datasets/pbl-euregio-database-2000-2010?locale=en), which can be found in the `/data/IO` folder.
 
 - `/scrips/test_t2.Rmd` trains and tests the base model as well as some alternative
 specifications using as input the websites with one unique postcode. 
@@ -59,6 +66,8 @@ multiple postcodes. It creates the `/data_inter/test_t2_multi_pc.RData`,
 which is then used by the document which produces the paper 
 (`/paper/submission2/hl_v2.Rmd`).
 
-- `/scripts/test_t2_LADs.Rmd` makes the trade predictions for Local Authority Districts (LADs). It's outputs are used to make the LADs maps (Figure 7) using the `/scripts/Maps.Rmd` and the [online supplementary material](https://etranos.info/regional_trade_hyperlinks/)  (`/scripts/index.Rmd`). 
+- `/scripts/test_t2_LADs.Rmd` makes the trade predictions for Local Authority Districts (LADs). It's outputs are used to make the LADs maps (Figure 7) using the `/scripts/Maps.Rmd` and the [online supplementary material](https://etranos.info/regional_trade_hyperlinks/).  
+
+- `/scripts/index.Rmd` produces the [online supplementary material](https://etranos.info/regional_trade_hyperlinks/). 
 
 - `/scripts/test_t2_lasso.Rmd` introduces the LASSO estimator, which is used in the appendix (`/paper/submission2/appendix.Rmd`).
