@@ -242,4 +242,4 @@ datatable(lad_df,
 
 <font size="+1.5">Tranos, E., A. Carrascal-Incera and G. Willis (2022) Using the web to predict regional trade flows: data extraction, modelling, and validation, *Annals of the AAG*. In press. [Link.](https://doi.org/10.1080/24694452.2022.2109577)</font>
 
-<small>Only the top *x%* of predicted trade flows are included in the visualisations.</small>
+<small>Only the top *25%* of predicted trade flows are included in the visualisations.</small>
