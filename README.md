@@ -18,7 +18,7 @@ To cite this article:
 Tranos, E., A. Carrascal Incera and G. Willis (2022) Using the web to predict regional trade flows: data extraction, modelling, and validation, *Annals of the American Association of Geographers*, [DOI: 10.1080/24694452.2022.2109577](https://www.tandfonline.com/doi/full/10.1080/24694452.2022.2109577)
 
 ```
-@article{doi:10.1080/24694452.2021.1939647,
+@article{regional_trade_hyperlinks,
 author = {Emmanouil Tranos and Andre Carrascal Incera and George Willis},
 title = {Working from Home and Digital Divides: Resilience during the Pandemic},
 journal = {Annals of the American Association of Geographers},
